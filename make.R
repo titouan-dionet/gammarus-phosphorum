@@ -10,22 +10,19 @@
 
 
 
-## Install Dependencies (listed in DESCRIPTION) ----
+## Install Dependencies (listed in DESCRIPTION) renv ----
 
 renv::restore()
 
+## Load Project Addins (R Functions) ----
+targets::tar_config_set(store = here::here("outputs", "pipeline"),
+                        script = here::here("analyses", "pipeline.R"))
 
-## Load Project Addins (R Functions and Packages) ----
+## Pre visualisation ----
+targets::tar_visnetwork()
 
-devtools::load_all(here::here())
+## Launch pipeline ----
+targets::tar_make()
 
-
-## Global Variables ----
-
-# You can list global variables here (or in a separate R script)
-
-
-## Run Project ----
-
-# List all R scripts in a sequential order and using the following form:
-# source(here::here("analyses", "script_X.R"))
+## Post visualisation ----
+targets::tar_visnetwork()

@@ -1,0 +1,3 @@
+main:
+  script: C:/Users/p05421/Titouan/10. Programmation/R/gammarus-phosphorum/analyses/pipeline.R
+  store: C:/Users/p05421/Titouan/10. Programmation/R/gammarus-phosphorum/outputs/pipeline
