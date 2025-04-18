@@ -10,3 +10,10 @@
 ^analyses$
 ^make\.R$
 ^\.Rprofile$
+^dev$
+^_quarto\.yaml$
+^_targets\.yaml$
+^fonts$
+^styles$
+^syntheses$
+^CODE_OF_CONDUCT\.md$

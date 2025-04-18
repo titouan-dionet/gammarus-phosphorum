@@ -1,25 +1,89 @@
-# macOS files ----
-.DS_Store
-
-# History files ----
+# R specific files ----
+# History files
 .Rhistory
 .Rapp.history
 
-# Session Data files ----
+# Session Data files
 .RData
+.RDataTmp
 .Ruserdata
 
-# RStudio files ----
-*.Rproj
+# RStudio files
 .Rproj.user/
+*.Rproj
 
-# R Environment Variables ----
+# R Environment Variables
 .Renviron
-
-# User-specific files ----
-README.html
-inst/doc
-man/
-NAMESPACE
-renv/
 .Rprofile
+
+# pkgdown site
+docs/
+
+# translation temp files
+po/*~
+
+# RStudio Connect folder
+rsconnect/
+
+# Package development
+*.o
+*.so
+*.dll
+autom4te.cache
+/Meta/
+/check/
+
+# macOS files ----
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows files ----
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Project specific folders ----
+# Generated outputs
+/outputs/
+/outputs*/
+
+# Synthesis files
+/syntheses/
+/syntheses*/
+
+# Documents
+/documents/
+/documents*/
+
+# Developpement
+/dev/
+/dev*/
+
+# Runtime files
+*.log
+*.tmp
+
+# Temporary or backup files
+*~
+\#*\#
+.#*
+*.bak
+*.swp
+
+# Local configuration
+_targets.yaml
+_quarto.yaml
+.quarto/
+
+# R environment
+renv/
+renv/library/
+renv/local/
+renv/cellar/
+renv/lock/
+renv/python/
+renv/staging/
+

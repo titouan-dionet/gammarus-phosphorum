@@ -1,3 +1,7 @@
 main:
-  script: C:/Users/p05421/Titouan/10. Programmation/R/gammarus-phosphorum/analyses/pipeline.R
-  store: C:/Users/p05421/Titouan/10. Programmation/R/gammarus-phosphorum/outputs/pipeline
+  store: C:/Users/p05421/Titouan/10.Programmation/R/gammarus-phosphorum/outputs/_targets
+  script: C:/Users/p05421/Titouan/10.Programmation/R/gammarus-phosphorum/analyses/pipeline/_targets.R
+production:
+  store: _targets_production
+  script: _targets.R
+  cue: thorough

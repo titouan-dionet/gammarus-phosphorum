@@ -1,18 +1,36 @@
-Package: gammarus-phosphorum
-Type: Package
-Title: The Title of the Project
-Version: 0.0.0.9000
-Authors@R: c(
-    person(given   = "Titouan",
-           family  = "Dionet",
-           role    = c("aut", "cre", "cph"),
-           email   = "titouan.dionet@univ-lorraine.fr",
-           comment = c(ORCID = "0009-0006-5602-1873")))
-Description: A paragraph providing a full description of the project (on 
-    several lines...)
+Package: gammarus.phosphorum
+Title: Population-level Tests of the Growth Rate Hypothesis in Gammarus
+    fossarum
+Version: 0.1.0
+Authors@R: 
+    person("Titouan", "Dionet", , "titouan.dionet@univ-lorraine.fr", role = c("aut", "cre", "cph"),
+           comment = c(ORCID = "0009-0006-5602-1873"))
+Description: A matrix-based framework for testing ecological stoichiometry
+    theories at the population level. Integrates phosphorus content
+    measurements with a size-structured population model for Gammarus
+    fossarum to investigate whether the Growth Rate Hypothesis applies at
+    the population level. Includes functions for matrix population
+    modeling, stoichiometric calculations, and comprehensive simulation
+    tools to explore the relationship between population growth rate and
+    elemental composition.
+License: GPL (>= 3)
 URL: https://github.com/titouan-dionet/gammarus-phosphorum
 BugReports: https://github.com/titouan-dionet/gammarus-phosphorum/issues
-License: GPL (>= 2)
+Imports: 
+    agricolae,
+    car,
+    data.table,
+    ggplot2,
+    grid,
+    gridExtra,
+    here,
+    MASS,
+    showtext,
+    sysfonts,
+    tools
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
