@@ -46,6 +46,10 @@ ehthumbs.db
 Desktop.ini
 
 # Project specific folders ----
+# Raw data
+/data/raw_data/
+/data/raw_data*/
+
 # Generated outputs
 /outputs/
 /outputs*/
