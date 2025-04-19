@@ -247,14 +247,14 @@ calculate_elasticity <- function(param_set, class_names, transition_matrix, feco
     mod_percentP <- mod_results$mean_percentP
     
     # Calculate elasticity
-    lambda_elasticity <- (lambda0 - mod_lambda) / (0.1 * lambda0)
-    P_elasticity <- (percentP0 - mod_percentP) / (0.1 * percentP0)
+    lambda_elasticity <- (lambda0 - mod_lambda) / lambda0
+    P_elasticity <- (percentP0 - mod_percentP) / percentP0
     
     # Store results
     tmp <- data.table(
       sample_id = param_set$iter,
       theta = theta,
-      class_affected = class_names[j],
+      class_affected = factor(class_names[j], levels = class_names),
       lambda0 = lambda0,
       mod_lambda = mod_lambda,
       percentP0 = percentP0,
