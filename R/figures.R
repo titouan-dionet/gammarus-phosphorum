@@ -15,6 +15,7 @@
 #' @param stats_info Statistical results with significance letters
 #'
 #' @return A ggplot object for Figure 1
+#' 
 #' @export
 create_phosphorus_figure <- function(phosphorus_data, stats_info) {
   # Create figure
@@ -66,48 +67,151 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
 #' @param elasticity_results Data table with elasticity analysis results
 #'
 #' @return A ggplot object for Figure 2
+#' 
+#' @import gglot2 patchwork
+#' @importFrom scales percent trans_new
+#' @importFrom showtext showtext_auto
+#' 
 #' @export
+
 create_elasticity_figure <- function(elasticity_results) {
+  # Create subdata
+  lambda_data <- elasticity_results[, .(theta, class_affected, lambda_elasticity)]
+  p_data <- elasticity_results[, .(theta, class_affected, P_elasticity)]
+  
+  # Create
+  temp_labels <- data.frame(
+    theta = unique(elasticity_results$theta),
+    label = paste0(unique(elasticity_results$theta), "\u00b0C")
+  )
+  
+  # Palette de couleurs pour les classes
+  class_colors <- c(
+    J1 = "#9ACD32", 
+    J2 = "#FFD700", 
+    A1 = "#8DEEEE", 
+    A2 = "#AB82FF", 
+    A3 = "#EE6AA7"
+  )
+  
   # Sub-figure A: Sensitivity of asymptotic growth rate (\u03bb)
-  fig_2a <- ggplot(elasticity_results) +
-    stat_ecdf(aes(x = lambda_elasticity, color = class_affected), 
-              geom = "line", pad = FALSE) +
-    facet_wrap(~ theta, labeller = labeller(theta = function(x) paste("Temperature =", x, "\u00b0C"))) +
-    scale_color_manual(
-      values = c(J1 = "#9ACD32", J2 = "#FFD700", A1 = "#8DEEEE", A2 = "#AB82FF", A3 = "#EE6AA7"),
-      name = "Size Class"
-    ) +
-    labs(
-      x = "Reduction in \u03bb (%)",
-      y = "Cumulative proportion of simulations",
-      title = "Sensitivity of asymptotic population growth rate (\u03bb)",
-      subtitle = "Effect of 10% reduction in survival rates"
-    ) +
+  lambda_plot <- ggplot(lambda_data) +
+    
+    # Scale axis
+    scale_x_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0, 1, by = 0.05), labels = scales::percent, expand = c(0.01, 0.01)) +
+    scale_y_continuous(breaks = seq(-20, 20, by = 1), minor_breaks = seq(-20, 20, by = 0.5), expand = c(0.01, 0.01)) +
+    coord_cartesian(xlim = c(0, 1), ylim = c(-10, 0), clip = "on") +
+    
+    # Scale color
+    scale_color_manual(values = class_colors, name = "Size Class") +
+    
+    # Mapping
+    aes(y = -lambda_elasticity*100, color = class_affected) +
+    
+    # Background
+    geom_vline(xintercept = c(0.25, 0.50, 0.75), col = "grey75", linewidth = 0.5, linetype = 2) +
+    
+    # Plot lines
+    stat_ecdf(geom = "step", pad = FALSE, linewidth = 1) +
+    
+    # Temperature labels in top-left corner of each facet
+    geom_label(data = temp_labels, aes(label = label),
+               x = -Inf, y = Inf, hjust = 0, vjust = 1,
+               label.padding = unit(0.15, "lines"),
+               label.size = 0,
+               label.r = unit(0, "lines"),
+               fill = "white",
+               alpha = 0.7,
+               family = "Roboto-Bold", size = 3.5, color = "black") +
+    
+    # Facets
+    facet_wrap(~ theta, nrow = 1) +
+    
+    # Labels
+    labs(x = "Cumulative proportion of simulations", 
+         y = "Change in \u03bb (%)") +
+    
+    # Theme
     theme_custom() +
-    theme(legend.position = "bottom")
-  
+    theme(
+      aspect.ratio = 1,
+      strip.background = element_blank(),
+      strip.text = element_blank(),
+      legend.position = "none",
+      plot.margin = margin(t = 2, b = 0, l = 2, r = 2),
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank()
+    )
+
   # Sub-figure B: Sensitivity of phosphorus percentage (%P)
-  fig_2b <- ggplot(elasticity_results) +
-    stat_ecdf(aes(x = P_elasticity, color = class_affected), 
-              geom = "line", pad = FALSE) +
-    facet_wrap(~ theta, labeller = labeller(theta = function(x) paste("Temperature =", x, "\u00b0C"))) +
-    scale_color_manual(
-      values = c(J1 = "#9ACD32", J2 = "#FFD700", A1 = "#8DEEEE", A2 = "#AB82FF", A3 = "#EE6AA7"),
-      name = "Size Class"
-    ) +
-    labs(
-      x = "Change in %P",
-      y = "Cumulative proportion of simulations",
-      title = "Sensitivity of population-level phosphorus percentage (%P)",
-      subtitle = "Effect of 10% reduction in survival rates"
-    ) +
+  squeeze_trans <- scales::trans_new(
+    name = "squeeze",
+    transform = function(x) sign(x) * log1p(abs(x)),
+    inverse = function(x) sign(x) * (exp(abs(x)) - 1),
+    domain = c(-Inf, Inf)
+  )
+  
+  p_plot <- ggplot(p_data) +
+    
+    # Scale axis
+    scale_x_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0, 1, by = 0.05), labels = scales::percent, expand = c(0.01, 0.01)) +
+    scale_y_continuous(breaks = seq(-20, 20, by = 1), minor_breaks = seq(-20, 20, by = 0.5), expand = c(0.01, 0.01), 
+                       transform = squeeze_trans) +
+    coord_cartesian(xlim = c(0, 1), ylim = c(-4, 4), clip = "on") +
+    
+    # Scale color
+    scale_color_manual(values = class_colors, name = "Size Class") +
+    
+    # Mapping
+    aes(y = -P_elasticity*100, color = class_affected) +
+    
+    # Background
+    geom_vline(xintercept = c(0.25, 0.50, 0.75), col = "grey75", linewidth = 0.5, linetype = 2) +
+
+    # Plot lines
+    stat_ecdf(geom = "step", pad = FALSE, linewidth = 1) +
+    
+    # Temperature labels in top-left corner of each facet
+    geom_label(data = temp_labels, aes(label = label),
+               x = -Inf, y = Inf, hjust = 0, vjust = 1,
+               label.padding = unit(0.15, "lines"),
+               label.size = 0,
+               label.r = unit(0, "lines"),
+               fill = "white",
+               alpha = 0.7,
+               family = "Roboto-Bold", size = 3.5, color = "black") +
+    
+    # Facets
+    facet_wrap(~ theta, nrow = 1) +
+    
+    # Labels
+    labs(x = "Cumulative proportion of simulations", 
+         y = "Change in populational P rate (%)", tag = '(B)') +
+    
+    # Theme
     theme_custom() +
-    theme(legend.position = "bottom")
+    theme(
+      aspect.ratio = 1,
+      strip.background = element_blank(),
+      strip.text = element_blank(),
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      legend.position = "bottom",
+      plot.margin = margin(t = 0, b = 2, l = 2, r = 2)
+    )
+
+  # Use patchwork to assemble the plots
+  library(patchwork)
   
-  # Combine the sub-figures
-  fig_2 <- gridExtra::grid.arrange(fig_2a, fig_2b, ncol = 1)
-  
-  return(fig_2)
+  # Assemble the plots
+  final_plot <- lambda_plot / p_plot +
+    plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')')  +
+    # Adjust layout
+    plot_layout(
+      heights = c(1, 1)    # Equal height for both plots
+    ) 
+
+  return(final_plot)
 }
 
 #' Create J1 and A3 survival effect figure
@@ -248,6 +352,8 @@ create_survival_gradient_subplot <- function(data, theta_val, class_name, monthl
 #'
 #' @return A ggplot object for Figure 4
 #' @export
+#' @importFrom grid textGrob gpar
+#' @importFrom gridExtra grid.arrange
 create_survival_gradient_effect <- function(multi_param_results, monthly_results) {
   # Temperatures and focal classes
   temps <- unique(multi_param_results$theta)

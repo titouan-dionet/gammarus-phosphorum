@@ -758,8 +758,8 @@ tar_plan(
       plot = figure_2,
       basename = "figure_2_elasticity_analysis",
       dir = fig_output_dir,
-      width = 2048,
-      height = 1744,
+      width = 1744,
+      height = 1280,
       units = "px",
       dpi = 200
     ),
