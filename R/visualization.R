@@ -45,63 +45,91 @@ setup_fonts <- function() {
 #' - Colors and font faces for titles, axis labels, and legends
 #' - Spacing between panels and margins
 #' - Background colors and styling for strips in faceted plots
+#' - Grid lines styling
 #'
 #' This creates a consistent visual style across all plots in your project.
 #' 
-#' @examples
-#' \dontrun{
-#' library(ggplot2)
-#' 
-#' # Create a plot with custom theme
-#' ggplot(data = gammarus_data, aes(x = Classe, y = percentP*100)) +
-#'   geom_boxplot() +
-#'   labs(x = "Size class", y = "Phosphorus (%)") +
-#'   theme_custom()
-#' }
-#' 
-#' @importFrom ggplot2 theme_bw theme element_text element_rect unit
+#' @importFrom ggplot2 theme_bw theme element_text element_rect element_line unit
 #' 
 #' @export
 theme_custom = function() {
-  base_theme = ggplot2::theme_bw()
+  base_theme <- ggplot2::theme_bw()
   
-  # Global
-  base_theme$text$family = "Roboto-Medium"
+  # Define colors
+  grid_color_major <- "grey90"
+  grid_color_minor <- "grey95"
   
-  # Panel
-  base_theme$panel.spacing = unit(0.5, "lines")
-  base_theme$panel.background$fill = "white"
+  # Global text settings
+  base_theme$text$family <- "Roboto-Medium"
+  
+  # Panel and grid lines
+  base_theme$panel.spacing <- unit(0.3, "lines")
+  base_theme$panel.background$fill <- "white"
+  base_theme$panel.grid.major <- element_line(color = grid_color_major, linewidth = 0.4)
+  base_theme$panel.grid.minor <- element_line(color = grid_color_minor, linewidth = 0.2)
+  base_theme$panel.border <- element_rect(color = "black", fill = NA, linewidth = 0.7)
   
   # Plot
-  # base_theme$plot.title$colour = "#0070C0"
-  base_theme$plot.title$face = "bold"
-  # base_theme$plot.subtitle$colour = "#0070C0"
-  base_theme$plot.subtitle$face = "italic"
-  base_theme$plot.margin = unit(c(1,1,1,1), "lines")
-  base_theme$plot.background$fill = "transparent"
-  base_theme$plot.background$colour = NA
+  base_theme$plot.title$family <- "Roboto-Bold"
+  base_theme$plot.title$face <- "plain"
+  base_theme$plot.title$size <- 12
+  base_theme$plot.title$hjust <- 0
+  
+  base_theme$plot.subtitle$family <- "Roboto-Medium"
+  base_theme$plot.subtitle$face <- "plain"
+  base_theme$plot.subtitle$size <- 10
+  base_theme$plot.subtitle$hjust <- 0
+  
+  base_theme$plot.caption$family <- "Roboto-Light"
+  base_theme$plot.caption$face <- "plain"
+  base_theme$plot.caption$size <- 8
+  
+  base_theme$plot.tag$family <- "Roboto-BoldCondensed"
+  base_theme$plot.tag$face <- "plain"
+  base_theme$plot.tag$size <- 14
+  
+  base_theme$plot.margin <- unit(c(1, 1, 1, 1), "lines")
+  base_theme$plot.background$fill <- "transparent"
+  base_theme$plot.background$colour <- NA
   
   # Axis
-  # base_theme$axis.title.x$colour = "#0070C0"
-  base_theme$axis.title.x$face = "bold"
-  # base_theme$axis.title.y$colour = "#0070C0"
-  base_theme$axis.title.y$face = "bold"
+  base_theme$axis.title <- element_text()
+  base_theme$axis.title$family <- "Roboto-Medium"
+  base_theme$axis.title$face <- "bold"
+  base_theme$axis.title$size <- 11
+  
+  base_theme$axis.text$family <- "Roboto-Medium"
+  base_theme$axis.text$face <- "plain"
+  base_theme$axis.text$size <- 9
+  base_theme$axis.text$color <- "black"
+  
+  base_theme$axis.ticks <- element_line(color = "black", linewidth = 0.5)
+  base_theme$axis.ticks.length <- unit(0.2, "lines")
   
   # Legend
-  # base_theme$legend.title$colour = "#0070C0"
-  base_theme$legend.title$face = "bold"
-  base_theme$legend.background$fill = "transparent"
-  base_theme$legend.background$colour = NA
-  # base_theme$legend.text$colour = "#0070C0"
-  base_theme$legend.text$face = "plain"
+  base_theme$legend.title$family <- "Roboto-Medium"
+  base_theme$legend.title$face <- "plain"
+  base_theme$legend.title$size <- 9
   
-  # Strip
-  # base_theme$strip.text$colour = "#0070C0"
-  base_theme$strip.text$face = "bold"
-  base_theme$strip.text$size = 10
-  base_theme$strip.background$colour = "black"
-  base_theme$strip.background$fill = "white"
-  base_theme$strip.background$linewidth = 0.5
+  base_theme$legend.text$family <- "Roboto-Medium"
+  base_theme$legend.text$face <- "plain"
+  base_theme$legend.text$size <- 8
+  
+  base_theme$legend.background$fill <- "transparent"
+  base_theme$legend.background$colour <- NA
+  base_theme$legend.key <- element_rect()
+  base_theme$legend.key$fill <- "transparent"
+  base_theme$legend.key.size <- unit(0.8, "lines")
+  base_theme$legend.margin <- margin(t = 2, r = 5, b = 5, l = 5)
+  base_theme$legend.spacing <- unit(0.4, "lines")
+  
+  # Strip (for facetting)
+  base_theme$strip.text$family <- "Roboto-Medium"
+  base_theme$strip.text$face <- "plain"
+  base_theme$strip.text$size <- 9
+  base_theme$strip.background$colour <- "black"
+  base_theme$strip.background$fill <- "white"
+  base_theme$strip.background$linewidth <- 0.5
   
   return(base_theme)
 }
