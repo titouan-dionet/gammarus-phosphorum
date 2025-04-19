@@ -21,11 +21,14 @@ Imports:
     car,
     data.table,
     ggplot2,
+    ggpubr,
     grid,
     gridExtra,
     here,
     MASS,
+    patchwork,
     showtext,
+    svglite,
     sysfonts,
     tools
 Encoding: UTF-8
