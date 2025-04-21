@@ -788,8 +788,8 @@ tar_plan(
       plot = figure_4,
       basename = "figure_4_survival_gradient_effect",
       dir = fig_output_dir,
-      width = 2048,
-      height = 1744,
+      width = 1744,
+      height = 1280,
       units = "px",
       dpi = 200
     ),

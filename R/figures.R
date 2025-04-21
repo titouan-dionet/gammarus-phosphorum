@@ -73,7 +73,6 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
 #' @importFrom showtext showtext_auto
 #' 
 #' @export
-
 create_elasticity_figure <- function(elasticity_results) {
   # Create subdata
   lambda_data <- elasticity_results[, .(theta, class_affected, lambda_elasticity)]
@@ -239,7 +238,7 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
   
   # Create figure
   fig_3 <- ggplot() +
-    # Format graphique
+    # Scales
     scale_x_continuous(breaks = seq(0, 5, by = 0.2), minor_breaks = seq(0, 5, by = 0.1), expand = c(0, 0)) +
     scale_y_continuous(breaks = seq(0, 2, by = 0.010), minor_breaks = seq(0, 2, by = 0.005), expand = c(0, 0)) +
     coord_cartesian(xlim = c(0.3, 1.400001), ylim = c(0.98, 1.02000001), clip = "on") +
@@ -250,7 +249,7 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
       name = "Size Class"
     ) +
     
-    # Background
+    # Background line for \u03bb = 1
     geom_vline(xintercept = 1, linewidth = 0.5, col = "darkgrey") +
     
     # Lines for survival variations
@@ -301,74 +300,6 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
   return(fig_3)
 }
 
-#' Create a subplot for the survival gradient effect figure
-#'
-#' @description
-#' Helper function to create a subplot for Figure 4
-#'
-#' @param data Data frame with simulation results
-#' @param theta_val Current temperature value
-#' @param class_name Size class name
-#' @param monthly_data Monthly simulation results
-#'
-#' @return A ggplot object for the subplot
-#' @keywords internal
-create_survival_gradient_subplot <- function(data, theta_val, class_name, monthly_data) {
-  ggplot(data[data$theta == theta_val, ]) +
-    # Background with reference lines
-    geom_vline(xintercept = 1, linewidth = 0.3, linetype = "dashed", color = "grey70") +
-    
-    # Simulated points
-    geom_point(
-      aes_string(x = "lambda", y = "mean_percentP * 100", color = paste0("surv_rate_", class_name)),
-      alpha = 0.6,
-      size = 0.7,
-      stroke = 0
-    ) +
-    
-    # Monthly reference points
-    geom_point(
-      data = monthly_data[monthly_data$theta == theta_val, ],
-      aes(x = lambda, y = mean_percentP * 100),
-      color = "red",
-      size = 1.2,
-      shape = 18
-    ) +
-    
-    # Scales
-    scale_color_viridis_c(
-      name = paste(class_name, "Survival"),
-      option = "viridis",
-      limits = c(0, 1)
-    ) +
-    
-    # Axis limits for consistency
-    scale_x_continuous(
-      limits = c(0.1, 1.4),
-      breaks = seq(0.2, 1.4, by = 0.4)
-    ) +
-    
-    scale_y_continuous(
-      limits = c(0.96, 1.05), 
-      breaks = seq(0.96, 1.05, by = 0.03)
-    ) +
-    
-    # Labels
-    labs(
-      title = paste0(theta_val, "\u00b0C - ", class_name)
-    ) +
-    
-    theme_custom() +
-    theme(
-      legend.position = "right",
-      legend.key.size = unit(0.8, "lines"),
-      legend.title = element_text(size = 8),
-      legend.text = element_text(size = 7),
-      plot.title = element_text(size = 10, hjust = 0.5),
-      axis.title = element_text(size = 9)
-    )
-}
-
 #' Create survival gradient effect figure
 #'
 #' @description 
@@ -380,54 +311,88 @@ create_survival_gradient_subplot <- function(data, theta_val, class_name, monthl
 #' @param monthly_results Monthly simulation results
 #'
 #' @return A ggplot object for Figure 4
+#' 
+#' @importFrom data.table as.data.table
+#' @importFrom dplyr mutate
+#' @importFrom tidyr pivot_longer expand_grid
+#' 
 #' @export
-#' @importFrom grid textGrob gpar
-#' @importFrom gridExtra grid.arrange
 create_survival_gradient_effect <- function(multi_param_results, monthly_results) {
-  # Temperatures and focal classes
-  temps <- unique(multi_param_results$theta)
-  focal_classes <- c("J1", "A3")
+  # Create subdata
+  simulations_data = multi_param_results[, .(theta, J1 = surv_rate_J1, A3 = surv_rate_A3, lambda, mean_percentP)] |> 
+    tidyr::pivot_longer(cols = c(J1, A3), names_to = "class", names_transform = as.factor, values_to = "surv_rate") |> 
+    dplyr::mutate(class = factor(class, levels = c("J1", "A3")), theta = as.factor(theta)) |> 
+    data.table::as.data.table()
   
-  # Create all subplots
-  plot_grid <- list()
-  row_count <- 1
-  
-  for (t in temps) {
-    for (cls in focal_classes) {
-      subplot <- create_survival_gradient_subplot(multi_param_results, t, cls, monthly_results)
-      
-      # Add axis labels only where needed
-      if (row_count == 3) {
-        subplot <- subplot + labs(x = "Asymptotic Growth Rate (\u03bb)")
-      } else {
-        subplot <- subplot + labs(x = "")
-      }
-      
-      if (cls == "J1") {
-        subplot <- subplot + labs(y = "Phosphorus Content (%)")
-      } else {
-        subplot <- subplot + labs(y = "")
-      }
-      
-      plot_grid[[length(plot_grid) + 1]] <- subplot
-    }
-    row_count <- row_count + 1
-  }
-  
-  # Combine the subplots
-  fig_4 <- gridExtra::grid.arrange(
-    grobs = plot_grid,
-    ncol = 2,
-    nrow = 3,
-    top = grid::textGrob(
-      "Population-Level Phosphorus Content vs. Growth Rate",
-      gp = grid::gpar(fontface = "bold", fontsize = 12)
-    ),
-    bottom = grid::textGrob(
-      "Colored by survival rate. Red points show monthly empirical values.",
-      gp = grid::gpar(fontsize = 9, fontface = "italic")
+  # Create temperature label
+  temp_labels = tidyr::expand_grid(class = unique(simulations_data$class), theta = unique(simulations_data$theta)) |> 
+      as.data.frame() |> 
+      dplyr::mutate(label = paste0(class, " - ", theta, "\u00b0C"))
+
+  # Create figure
+  fig_4 = ggplot() +
+    # Scales
+    scale_x_continuous(breaks = seq(0, 5, by = 0.2), minor_breaks = seq(0, 5, by = 0.1), expand = c(0, 0)) +
+    scale_y_continuous(breaks = seq(0, 2, by = 0.010), minor_breaks = seq(0, 2, by = 0.005), expand = c(0, 0)) +
+    coord_cartesian(xlim = c(0, 1.500001), ylim = c(0.95, 1.05000001), clip = "on") +
+    
+    # Style
+    scale_color_viridis_c(name = "Class survival", option = "mako", limits = c(0, 1),
+                          guide = guide_colorbar(
+                            title.position = "left",        
+                            title.vjust = 1,                 
+                            barwidth = unit(100, "points"),        
+                            barheight = unit(10, "points")      
+                          )
+    ) +
+    
+    # Background line for \u03bb = 1
+    geom_vline(xintercept = 1, linewidth = 0.5, col = "darkgrey") +
+    
+    # Simulated points
+    geom_point(
+      data = simulations_data,
+      aes(x = lambda, y = mean_percentP * 100, color = surv_rate),
+      alpha = 0.6, size = 0.7, stroke = 0
+    ) +
+    
+    # Monthly reference points
+    geom_point(
+      data = monthly_results,
+      aes(x = lambda, y = mean_percentP * 100),
+      color = "red", size = 1.2, shape = 18
+    ) +
+    
+    # Temperature labels in top-left corner of each facet
+    geom_label(data = temp_labels, aes(label = label),
+               x = Inf, y = Inf, hjust = 1, vjust = 1,
+               label.padding = unit(0.15, "lines"),
+               label.size = 0,
+               label.r = unit(0, "lines"),
+               fill = "white",
+               alpha = 0.7,
+               family = "Roboto-Bold", size = 3.5, color = "black") +
+    
+    # Labels
+    labs(
+      x = "Asymptotic Growth Rate (\u03bb)",
+      y = "Populational P rate (%)"
+    ) +
+    
+    # Facets
+    facet_wrap(class ~ theta, nrow = 2) +
+    
+    # Theme
+    theme_custom() +
+    theme(
+      aspect.ratio = 1,
+      strip.background = element_blank(),
+      strip.text = element_blank(),
+      panel.spacing.y = unit(0.7, "lines"),
+      legend.position = "bottom",
+      legend.direction = "horizontal",
+      plot.margin = margin(t = 5, b = 5, l = 5, r = 8)
     )
-  )
-  
+
   return(fig_4)
 }
