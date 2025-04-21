@@ -49,7 +49,7 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
     
     # Labels
     labs(x = "Size class", 
-         y = "Individual phosphorus content (%)") +
+         y = "Individual P rate (%)") +
     
     # Theme
     theme_custom()
@@ -79,7 +79,7 @@ create_elasticity_figure <- function(elasticity_results) {
   lambda_data <- elasticity_results[, .(theta, class_affected, lambda_elasticity)]
   p_data <- elasticity_results[, .(theta, class_affected, P_elasticity)]
   
-  # Create
+  # Create temperature label
   temp_labels <- data.frame(
     theta = unique(elasticity_results$theta),
     label = paste0(unique(elasticity_results$theta), "\u00b0C")
@@ -187,7 +187,8 @@ create_elasticity_figure <- function(elasticity_results) {
     
     # Labels
     labs(x = "Cumulative proportion of simulations", 
-         y = "Change in populational P rate (%)", tag = '(B)') +
+         y = "Change in populational P rate (%)"
+    ) +
     
     # Theme
     theme_custom() +
@@ -208,8 +209,10 @@ create_elasticity_figure <- function(elasticity_results) {
     plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')')  +
     # Adjust layout
     plot_layout(
-      heights = c(1, 1)    # Equal height for both plots
-    ) 
+      heights = c(1, 1),    # Equal height for both plots
+      guides = "collect"
+    ) &
+    theme(legend.position = "bottom")
 
   return(final_plot)
 }
@@ -227,12 +230,25 @@ create_elasticity_figure <- function(elasticity_results) {
 #' @return A ggplot object for Figure 3
 #' @export
 create_j1_a3_survival_effect <- function(figure_data, ref_points) {
+  
+  # Create temperature label
+  temp_labels <- data.frame(
+    theta = unique(figure_data$theta),
+    label = paste0(unique(figure_data$theta), "\u00b0C")
+  )
+  
   # Create figure
   fig_3 <- ggplot() +
     # Format graphique
     scale_x_continuous(breaks = seq(0, 5, by = 0.2), minor_breaks = seq(0, 5, by = 0.1), expand = c(0, 0)) +
     scale_y_continuous(breaks = seq(0, 2, by = 0.010), minor_breaks = seq(0, 2, by = 0.005), expand = c(0, 0)) +
     coord_cartesian(xlim = c(0.3, 1.400001), ylim = c(0.98, 1.02000001), clip = "on") +
+    
+    # Style
+    scale_color_manual(
+      values = c(J1 = "#9ACD32", A3 = "#EE6AA7"),
+      name = "Size Class"
+    ) +
     
     # Background
     geom_vline(xintercept = 1, linewidth = 0.5, col = "darkgrey") +
@@ -252,22 +268,35 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
       size = 1
     ) +
     
-    # Style
-    scale_color_manual(
-      values = c(J1 = "#9ACD32", A3 = "#EE6AA7"),
-      name = "Size Class", guide = "none"
-    ) +
+    # Temperature labels in bottom-left corner of each facet
+    geom_label(data = temp_labels, aes(label = label),
+               x = -Inf, y = -Inf, hjust = 0, vjust = 0,
+               label.padding = unit(0.15, "lines"),
+               label.size = 0,
+               label.r = unit(0, "lines"),
+               fill = "white",
+               alpha = 0.7,
+               family = "Roboto-Bold", size = 3.5, color = "black") +
     
     # Labels
     labs(
       x = "Asymptotic Growth Rate (\u03bb)",
-      y = "Phosphorus Content (%)",
-      title = "Relationship between Population Growth Rate and Phosphorus Content",
-      subtitle = "Effect of varying survival rates for smallest (J1) and largest (A3) size classes"
+      y = "Populational P rate (%)"
     ) +
     
-    facet_grid(vars(class_var), vars(theta))+
-    theme_custom()
+    # Facets
+    facet_wrap(~ theta, nrow = 1) +
+    
+    # Theme
+    theme_custom() +
+    theme(
+      aspect.ratio = 1,
+      strip.background = element_blank(),
+      strip.text = element_blank(),
+      panel.spacing.x = unit(0.7, "lines"),
+      legend.position = "bottom",
+      plot.margin = margin(t = 5, b = 5, l = 5, r = 8)
+    )
   
   return(fig_3)
 }

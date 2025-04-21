@@ -773,10 +773,10 @@ tar_plan(
       plot = figure_3,
       basename = "figure_3_j1_a3_survival_effect",
       dir = fig_output_dir,
-      width = 2048,
-      height = 1384,
+      width = 1024,
+      height = 550,
       units = "px",
-      dpi = 300
+      dpi = 200
     ),
     description = "Saved Figure 3 in multiple formats"
   ),
