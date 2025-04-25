@@ -113,9 +113,9 @@ create_elasticity_figure <- function(elasticity_results) {
     # Plot lines
     stat_ecdf(geom = "step", pad = FALSE, linewidth = 1) +
     
-    # Temperature labels in top-left corner of each facet
+    # Temperature labels in bottom-right corner of each facet
     geom_label(data = temp_labels, aes(label = label),
-               x = -Inf, y = Inf, hjust = 0, vjust = 1,
+               x = Inf, y = -Inf, hjust = 1, vjust = 0,
                label.padding = unit(0.15, "lines"),
                label.size = 0,
                label.r = unit(0, "lines"),
@@ -171,9 +171,9 @@ create_elasticity_figure <- function(elasticity_results) {
     # Plot lines
     stat_ecdf(geom = "step", pad = FALSE, linewidth = 1) +
     
-    # Temperature labels in top-left corner of each facet
+    # Temperature labels in bottom-right corner of each facet
     geom_label(data = temp_labels, aes(label = label),
-               x = -Inf, y = Inf, hjust = 0, vjust = 1,
+               x = Inf, y = -Inf, hjust = 1, vjust = 0,
                label.padding = unit(0.15, "lines"),
                label.size = 0,
                label.r = unit(0, "lines"),
@@ -229,11 +229,16 @@ create_elasticity_figure <- function(elasticity_results) {
 #' @return A ggplot object for Figure 3
 #' @export
 create_j1_a3_survival_effect <- function(figure_data, ref_points) {
+  # Create subdata
+  figure_subdata = figure_data[, .(theta, class_var, J1 = surv_rate_J1, A3 = surv_rate_A3, lambda, mean_percentP)] |> 
+    tidyr::pivot_longer(cols = c(J1, A3), names_to = "class", names_transform = as.factor, values_to = "surv_rate") |> 
+    dplyr::mutate(class = factor(class, levels = c("J1", "A3")), theta = as.factor(theta)) |> 
+    data.table::as.data.table()
   
   # Create temperature label
   temp_labels <- data.frame(
-    theta = unique(figure_data$theta),
-    label = paste0(unique(figure_data$theta), "\u00b0C")
+    theta = unique(figure_subdata$theta),
+    label = paste0(unique(figure_subdata$theta), "\u00b0C")
   )
   
   # Create figure
@@ -254,9 +259,9 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
     
     # Lines for survival variations
     geom_line(
-      data = figure_data,
+      data = figure_subdata,
       aes(x = lambda, y = mean_percentP * 100, color = class_var),
-      linetype = 1, linewidth = 1, lineend = "round"
+      linewidth = 1, lineend = "round"
     ) +
     
     # Reference points (annual mean rates)
@@ -267,9 +272,9 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
       size = 1
     ) +
     
-    # Temperature labels in bottom-left corner of each facet
+    # Temperature labels in bottom-right corner of each facet
     geom_label(data = temp_labels, aes(label = label),
-               x = -Inf, y = -Inf, hjust = 0, vjust = 0,
+               x = Inf, y = -Inf, hjust = 1, vjust = 0,
                label.padding = unit(0.15, "lines"),
                label.size = 0,
                label.r = unit(0, "lines"),
@@ -363,9 +368,9 @@ create_survival_gradient_effect <- function(multi_param_results, monthly_results
       color = "red", size = 1.2, shape = 18
     ) +
     
-    # Temperature labels in top-left corner of each facet
+    # Temperature labels in bottom-right corner of each facet
     geom_label(data = temp_labels, aes(label = label),
-               x = Inf, y = Inf, hjust = 1, vjust = 1,
+               x = Inf, y = -Inf, hjust = 1, vjust = 0,
                label.padding = unit(0.15, "lines"),
                label.size = 0,
                label.r = unit(0, "lines"),
@@ -381,6 +386,7 @@ create_survival_gradient_effect <- function(multi_param_results, monthly_results
     
     # Facets
     facet_wrap(class ~ theta, nrow = 2) +
+    tagger::tag_facets(tag = "rc", position = "tl", tag_levels = c("A", "1"), tag_prefix = "(", tag_suffix = ")", tag_sep = "") +
     
     # Theme
     theme_custom() +
