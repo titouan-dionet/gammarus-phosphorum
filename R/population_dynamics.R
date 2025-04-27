@@ -71,6 +71,53 @@ growth_rates_matrix = function(N_ind = 10000, L_max, delta_t, theta, class_lim, 
   return(MAT)
 }
 
+#' Calculate transition rates for a range of temperatures
+#'
+#' @description 
+#' This function calculates transition rates between size classes for a range of temperatures
+#' using the growth_rates_matrix function.
+#'
+#' @param temp_range Numeric vector of temperatures to calculate transition rates for
+#' @param L_max Maximum size in mm
+#' @param delta_t Time step in days
+#' @param class_lim Vector of size class limits
+#' @param class_names Vector of size class names
+#'
+#' @return A data frame in long format containing transition rates for each temperature
+#' 
+#' @export
+calculate_transition_rates <- function(temp_range, L_max, delta_t, class_lim, class_names) {
+  # Initialize empty data frame
+  data_for_plot <- data.frame()
+  
+  # Calculate transition rates for each temperature
+  for (theta in temp_range) {
+    # Calculate transition matrix
+    trans_mat <- growth_rates_matrix(
+      L_max = L_max,
+      delta_t = delta_t,
+      theta = theta,
+      class_lim = class_lim,
+      class_names = class_names
+    )
+    
+    # Convert to long format
+    temp_data <- as.data.frame(trans_mat) |> 
+      tibble::rownames_to_column(var = "X") |> 
+      tidyr::pivot_longer(cols = -X, names_to = "Y", values_to = "Z") |> 
+      dplyr::mutate(theta = theta)
+    
+    # Add to result data frame
+    data_for_plot <- rbind(data_for_plot, temp_data)
+  }
+  
+  # Ensure proper factor ordering
+  data_for_plot$X <- factor(data_for_plot$X, levels = class_names)
+  data_for_plot$Y <- factor(data_for_plot$Y, levels = class_names)
+  
+  return(data_for_plot)
+}
+
 ###############################################################################
 # FECONDITY RATES MATRIX FUNCTION
 ###############################################################################

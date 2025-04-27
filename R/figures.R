@@ -433,3 +433,68 @@ create_survival_gradient_effect <- function(multi_param_results, monthly_results
 
   return(fig_4)
 }
+
+#' Create a plot of significant transition rates between size classes
+#'
+#' @description 
+#' This function creates Figure S1 showing significant transition rates between size classes
+#' as a function of temperature.
+#'
+#' @param transition_data Data frame containing transition rates (output from calculate_transition_rates)
+#' @param significance_threshold Minimum transition rate to be considered significant (default: 0.01)
+#' @param reference_temps Vector of reference temperatures to highlight with vertical lines
+#' @param L_max Maximum size in mm
+#' @param delta_t Time step in days
+#'
+#' @return A ggplot object with the transition rates visualization for Figure S1
+#' 
+#' @importFrom ggplot2 ggplot aes geom_vline geom_line scale_x_continuous scale_y_continuous coord_cartesian labs facet_grid
+#' @importFrom dplyr group_by summarise filter inner_join
+#' 
+#' @export
+create_transition_rates_plot <- function(transition_data, 
+                                         significance_threshold = 0.01,
+                                         reference_temps = c(8, 12, 16),
+                                         L_max,
+                                         delta_t) {
+  # Identify significant transitions
+  significant_transitions <- transition_data |> 
+    dplyr::group_by(X, Y) |> 
+    dplyr::summarise(max_value = max(Z), .groups = "drop") |> 
+    dplyr::filter(max_value > significance_threshold)
+  
+  # Filter data for significant transitions only
+  filtered_data <- transition_data |> 
+    dplyr::inner_join(significant_transitions, by = c("X", "Y"))
+  
+  # Create the plot
+  plot <- ggplot(filtered_data) +
+    # Scales
+    scale_x_continuous(breaks = seq(0, 25, by = 5), 
+                       minor_breaks = seq(0, 25, by = 2.5), 
+                       expand = c(0.01, 0.01)) +
+    scale_y_continuous(breaks = seq(0, 1, by = 0.25), 
+                       minor_breaks = seq(0, 1, by = 0.125), 
+                       expand = c(0.01, 0.01)) +
+    coord_cartesian(xlim = c(0, 25), ylim = c(0, 1), clip = "on") +
+    
+    # Elements
+    aes(x = theta, y = Z) +
+    geom_vline(xintercept = reference_temps, col = "#A0A0A0", linetype = "dashed") +
+    geom_line(linewidth = 1, color = "#0070C0") +
+    
+    # Labels
+    labs(x = "Temperature (°C)",
+         y = "Transition rate",
+         # title = "Significant transition rates between size classes",
+         # subtitle = paste("Time step: ", delta_t, " days", sep = "")
+    ) +
+    
+    # Theme and facets
+    theme_custom() +
+    facet_grid(vars(X), vars(Y)) +
+    theme(aspect.ratio = 1,
+          panel.spacing = unit(x = 0.5, units = "lines"))
+  
+  return(plot)
+}

@@ -750,6 +750,44 @@ tar_plan(
   # ______________________________________________________________________________
   # Supplementary figures ----
   # ______________________________________________________________________________
+
+  # Temperature-dependent transition rates visualization
+  # Generate temperature range for transition rates
+  tar_target(
+    temp_range_transition,
+    seq(2, 25, by = 0.1),
+    description = "Temperature range for transition rates visualization"
+  ),
+  
+  # Calculate transition rates for all temperatures
+  tar_target(
+    transition_rates_data,
+    calculate_transition_rates(
+      temp_range = temp_range_transition,
+      L_max = base_params$L_max,
+      delta_t = base_params$delta_t,
+      class_lim = base_params$lim_class,
+      class_names = base_params$names_class
+    ),
+    description = "Transition rates data for visualization"
+  ),
+  
+  # Create transition rates plot
+  tar_target(
+    transition_rates_plot,
+    {
+      load_fonts
+      create_transition_rates_plot(
+        transition_data = transition_rates_data,
+        significance_threshold = 0.01,
+        reference_temps = base_params$Theta_vec,
+        L_max = base_params$L_max,
+        delta_t = base_params$delta_t
+      )
+    },
+    description = "Plot showing transition rates between size classes as a function of temperature"
+  ),
+  
   
   # Elasticities on fecundity and growth parameters
   # Create Figure S2
@@ -836,6 +874,20 @@ tar_plan(
     description = "Saved Figure 4 in multiple formats"
   ),
   
+  # Save Figure S1
+  tar_target(
+    save_transition_rates_plot,
+    save_figure(
+      plot = transition_rates_plot,
+      basename = "figure_S1_temperature_transition_rates",
+      dir = fig_output_dir,
+      width = 2048,
+      height = 2048,
+      units = "px",
+      dpi = 300
+    ),
+    description = "Saved Figure S1 in multiple formats"
+  ),
   # Save Figure S2
   tar_target(
     save_figure_S2,
