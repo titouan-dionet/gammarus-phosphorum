@@ -2,9 +2,12 @@ Package: gammarus.phosphorum
 Title: Population-level Tests of the Growth Rate Hypothesis in Gammarus
     fossarum
 Version: 0.1.0
-Authors@R: 
-    person("Titouan", "Dionet", , "titouan.dionet@univ-lorraine.fr", role = c("aut", "cre", "cph"),
-           comment = c(ORCID = "0009-0006-5602-1873"))
+Authors@R: c(
+    person(given = "Titouan", 
+        family = "Dionet",
+        role = c("aut", "cre", "cph"),
+        email = "titouan.dionet@univ-lorraine.fr",
+        comment = c(ORCID = "0009-0006-5602-1873")))
 Description: A matrix-based framework for testing ecological stoichiometry
     theories at the population level. Integrates phosphorus content
     measurements with a size-structured population model for Gammarus
@@ -20,20 +23,26 @@ Imports:
     agricolae,
     car,
     data.table,
+    dplyr,
     ggplot2,
-    ggpubr,
     grid,
     gridExtra,
     here,
     MASS,
     patchwork,
+    scales,
     showtext,
-    svglite,
+    stats,
     sysfonts,
-    tools
+    tagger,
+    tibble,
+    tidyr,
+    tools,
+    utils
+Suggests: 
+    testthat (>= 3.0.0),
+    svglite
+Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Suggests: 
-    testthat (>= 3.0.0)
-Config/testthat/edition: 3

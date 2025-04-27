@@ -10,12 +10,14 @@ growth_rates_matrix(
   delta_t,
   theta,
   class_lim,
-  class_names = NULL
+  class_names = NULL,
+  growth_rate_coef = 0.0014,
+  growth_rate_intercept = -0.0024
 )
 }
 \arguments{
 \item{N_ind}{Integer. Total number of individuals in each class needed for determining
-the transition rate. Default is 10,000.}
+the transition rate (default: 10,000).}
 
 \item{L_max}{Numeric. Maximum size of individuals for the logistic growth model.}
 
@@ -26,7 +28,11 @@ the transition rate. Default is 10,000.}
 \item{class_lim}{Numeric vector. Boundaries of the different classes; note that the upper limit
 must be specified.}
 
-\item{class_names}{Character vector. Names of the different classes. Default is NULL.}
+\item{class_names}{Character vector. Names of the different classes (default: \code{NULL}).}
+
+\item{growth_rate_coef}{Numeric. Coefficient for temperature in growth rate equation (default: 0.0014).}
+
+\item{growth_rate_intercept}{Numeric. Intercept in growth rate equation (default: -0.0024).}
 }
 \value{
 A data frame representing the transition matrix for the given parameters, with rows and

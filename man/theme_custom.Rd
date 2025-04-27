@@ -20,19 +20,8 @@ The function customizes multiple visual aspects of a ggplot2 plot, including:
 \item Colors and font faces for titles, axis labels, and legends
 \item Spacing between panels and margins
 \item Background colors and styling for strips in faceted plots
+\item Grid lines styling
 }
 
 This creates a consistent visual style across all plots in your project.
-}
-\examples{
-\dontrun{
-library(ggplot2)
-
-# Create a plot with custom theme
-ggplot(data = gammarus_data, aes(x = Classe, y = percentP*100)) +
-  geom_boxplot() +
-  labs(x = "Size class", y = "Phosphorus (\%)") +
-  theme_custom()
-}
-
 }

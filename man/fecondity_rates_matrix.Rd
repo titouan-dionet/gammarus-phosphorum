@@ -10,7 +10,11 @@ fecondity_rates_matrix(
   fertil,
   delta_t,
   theta,
-  class_names = NULL
+  class_names = NULL,
+  molt_cycle_a = 30.61,
+  molt_cycle_b = -0.39,
+  molt_cycle_c = 0.01,
+  molt_cycle_d = 0.05
 )
 }
 \arguments{
@@ -25,7 +29,15 @@ must be taken into account.}
 
 \item{theta}{Numeric. Target temperature in Celsius.}
 
-\item{class_names}{Character vector. Names of the different classes. Default is NULL.}
+\item{class_names}{Character vector. Names of the different classes (default: \code{NULL}).}
+
+\item{molt_cycle_a}{Numeric. Parameter 'beta_1' in molt cycle equation (default: 30.61).}
+
+\item{molt_cycle_b}{Numeric. Parameter 'alpha_1' in molt cycle equation (default: -0.39).}
+
+\item{molt_cycle_c}{Numeric. Parameter 'beta_2' in molt cycle equation (default: 0.01).}
+
+\item{molt_cycle_d}{Numeric. Parameter 'alpha_2' in molt cycle equation (default: 0.05).}
 }
 \value{
 A data frame representing the fecundity matrix for the given parameters, with rows and
@@ -38,7 +50,7 @@ This function determines the fecundity matrix for a population of gammarus.
 The function creates a fecundity matrix where only the first row contains non-zero values,
 representing the production of juveniles (first size class) by adults of different classes.
 The molting cycle duration (which affects fecundity) is calculated based on temperature using:
-d = (30.61 - 0.39\emph{θ) / (0.01 + 0.05}θ)
+\verb{d = (m_a + m_b * \\u03b8) / (m_c + m_d * \\u03b8)}
 }
 \examples{
 \dontrun{

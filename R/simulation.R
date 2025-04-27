@@ -352,6 +352,12 @@ calculate_comprehensive_elasticity <- function(param_set, class_names, transitio
 #' @param sexratio Sex ratio (proportion of females)
 #' @param gravid Proportion of gravid females
 #' @param fertil Vector of fertility rates by size class
+#' @param growth_rate_coef Growth rate coefficient in growth model
+#' @param growth_rate_intercept Growth rate intercept in growth model
+#' @param molt_cycle_a Parameter beta_1 in molt cycle equation
+#' @param molt_cycle_b Parameter alpha_1 in molt cycle equation              
+#' @param molt_cycle_c Parameter beta_2 in molt cycle equation
+#' @param molt_cycle_d Parameter alpha_2 in molt cycle equation
 #' @param parameter_name Name of the parameter to modify
 #'
 #' @return A data.table with elasticity results

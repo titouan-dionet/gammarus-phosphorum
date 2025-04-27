@@ -64,7 +64,8 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
 #' the sensitivity of population growth rate and phosphorus content
 #' to survival, fecundity, and growth rates.
 #'
-#' @param elasticity_results Data table with comprehensive elasticity analysis results
+#' @param elasticity_results Data table with comprehensive elasticity analysis results.
+#' @param analysis_type Type of analysis to coduct: \code{"survival"}, \code{"fecundity"} or \code{"growth"}.
 #'
 #' @return A ggplot object for Figure 2, S2 or S3
 #' @export
@@ -229,14 +230,11 @@ create_comprehensive_elasticity_figure <- function(elasticity_results, analysis_
     
   }
   
-  # Use patchwork to assemble the plots
-  library(patchwork)
-  
   # Assemble the plots
   final_plot <- (lambda_plot / p_plot) +
-    plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')')  +
+    patchwork::plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')')  +
     # Adjust layout
-    plot_layout(
+    patchwork::plot_layout(
       heights = c(1, 1),    # Equal height for both plots
       guides = "collect"
     ) &
@@ -493,7 +491,7 @@ create_transition_rates_plot <- function(transition_data,
     geom_line(linewidth = 1, color = "#0070C0") +
     
     # Labels
-    labs(x = "Temperature (°C)",
+    labs(x = "Temperature (\u00b0C)",
          y = "Transition rate",
          # title = "Significant transition rates between size classes",
          # subtitle = paste("Time step: ", delta_t, " days", sep = "")
@@ -607,9 +605,6 @@ create_model_parameter_elasticity_figure <- function(elasticity_results) {
     categories_levels
   )
   
-  # Use patchwork to assemble the plots
-  library(patchwork)
-  
   for (i in 1:length(categories_levels)) {
     # Select sub-data
     data = results_with_categories[category == categories_levels[i]]
@@ -706,9 +701,9 @@ create_model_parameter_elasticity_figure <- function(elasticity_results) {
     
     # Assemble the plots
     final_plot <- (lambda_plot / p_plot) +
-      plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')')  +
+      patchwork::plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')')  +
       # Adjust layout
-      plot_layout(
+      patchwork::plot_layout(
         heights = c(1, 1),    # Equal height for both plots
         guides = "collect"
       ) &

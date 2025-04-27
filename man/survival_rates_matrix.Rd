@@ -10,7 +10,7 @@ survival_rates_matrix(survival_rates, class_names = NULL)
 \item{survival_rates}{Numeric vector. Survival rates for each class, ranging from 0 to 1.
 Note that ALL classes must be taken into account.}
 
-\item{class_names}{Character vector. Names of the different classes. Default is NULL.}
+\item{class_names}{Character vector. Names of the different classes (default: \code{NULL}).}
 }
 \value{
 A data frame representing the survival rates matrix for the given survival rates,

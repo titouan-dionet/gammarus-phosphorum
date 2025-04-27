@@ -22,7 +22,7 @@
 #' @param theta Numeric. Target temperature in Celsius.
 #' @param class_lim Numeric vector. Boundaries of the different classes; note that the upper limit 
 #'        must be specified.
-#' @param class_names Character vector. Names of the different classes (default: \NULL).
+#' @param class_names Character vector. Names of the different classes (default: \code{NULL}).
 #' @param growth_rate_coef Numeric. Coefficient for temperature in growth rate equation (default: 0.0014).
 #' @param growth_rate_intercept Numeric. Intercept in growth rate equation (default: -0.0024).
 #' 
@@ -145,7 +145,7 @@ calculate_transition_rates <- function(temp_range, L_max, delta_t, class_lim, cl
 #'        must be taken into account.
 #' @param delta_t Numeric. Time step in days.
 #' @param theta Numeric. Target temperature in Celsius.
-#' @param class_names Character vector. Names of the different classes (default: \NULL).
+#' @param class_names Character vector. Names of the different classes (default: \code{NULL}).
 #' @param molt_cycle_a Numeric. Parameter 'beta_1' in molt cycle equation (default: 30.61).
 #' @param molt_cycle_b Numeric. Parameter 'alpha_1' in molt cycle equation (default: -0.39).
 #' @param molt_cycle_c Numeric. Parameter 'beta_2' in molt cycle equation (default: 0.01).
@@ -158,7 +158,7 @@ calculate_transition_rates <- function(temp_range, L_max, delta_t, class_lim, cl
 #' The function creates a fecundity matrix where only the first row contains non-zero values,
 #' representing the production of juveniles (first size class) by adults of different classes.
 #' The molting cycle duration (which affects fecundity) is calculated based on temperature using:
-#' d = (m_a + m_b*\u03b8) / (m_c + m_d*\u03b8)
+#' `d = (m_a + m_b * \u03b8) / (m_c + m_d * \u03b8)`
 #' 
 #' @examples
 #' \dontrun{
@@ -211,7 +211,7 @@ fecondity_rates_matrix <- function(
 #' 
 #' @param survival_rates Numeric vector. Survival rates for each class, ranging from 0 to 1.
 #'        Note that ALL classes must be taken into account.
-#' @param class_names Character vector. Names of the different classes. Default is NULL.
+#' @param class_names Character vector. Names of the different classes (default: \code{NULL}).
 #' 
 #' @return A data frame representing the survival rates matrix for the given survival rates,
 #'         with rows and columns named according to class_names if provided.
@@ -371,7 +371,7 @@ Leslie_matrix = function(transition_matrix, fecondity_matrix, survival_matrix, c
 #' a Leslie population matrix.
 #' 
 #' @param Leslie_matrix Matrix or data frame. Leslie population matrix. It must be a square matrix.
-#' @param class_names Character vector. Names of the different classes. Default is NULL.
+#' @param class_names Character vector. Names of the different classes (default: \code{NULL}).
 #' 
 #' @return A list containing two elements:
 #'   \item{lambda}{Numeric value representing the asymptotic growth rate of the given matrix.}

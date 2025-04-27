@@ -13,7 +13,7 @@ future::plan(future::multisession, workers = 6)
 
 # Set pipeline options
 tar_option_set(
-  packages = c("data.table", "ggplot2"), # Common packages for all targets
+  packages = c("data.table", "ggplot2", "patchwork"), # Common packages for all targets
   format = "rds",                        # Default storage format
   error = "continue"                     # Prevents pipeline from stopping on error
 )

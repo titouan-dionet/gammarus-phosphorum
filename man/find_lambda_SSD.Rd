@@ -9,7 +9,7 @@ find_lambda_SSD(Leslie_matrix, class_names = NULL)
 \arguments{
 \item{Leslie_matrix}{Matrix or data frame. Leslie population matrix. It must be a square matrix.}
 
-\item{class_names}{Character vector. Names of the different classes. Default is NULL.}
+\item{class_names}{Character vector. Names of the different classes (default: \code{NULL}).}
 }
 \value{
 A list containing two elements:
