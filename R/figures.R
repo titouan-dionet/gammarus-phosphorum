@@ -69,6 +69,7 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
 #' @return A ggplot object for Figure 2, S2 or S3
 #' @export
 #' @importFrom scales trans_new label_percent
+#' @importFrom scales trans_new label_percent
 create_comprehensive_elasticity_figure <- function(elasticity_results, analysis_type) {
   # Select data
   elasticity_results = elasticity_results[parameter_type == analysis_type]
@@ -259,6 +260,9 @@ create_comprehensive_elasticity_figure <- function(elasticity_results, analysis_
 #' @importFrom data.table as.data.table
 #' @importFrom dplyr mutate
 #' @importFrom tidyr pivot_longer
+#' @importFrom data.table as.data.table
+#' @importFrom dplyr mutate
+#' @importFrom tidyr pivot_longer
 create_j1_a3_survival_effect <- function(figure_data, ref_points) {
   # Create subdata
   figure_subdata = figure_data[, .(theta, class_var, J1 = surv_rate_J1, A3 = surv_rate_A3, lambda, mean_percentP)] |> 
@@ -349,6 +353,10 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
 #' @return A ggplot object for Figure 4
 #' 
 #' @export
+#' @importFrom data.table as.data.table
+#' @importFrom dplyr mutate
+#' @importFrom tagger tag_facets
+#' @importFrom tidyr pivot_longer expand_grid
 #' @importFrom data.table as.data.table
 #' @importFrom dplyr mutate
 #' @importFrom tagger tag_facets
@@ -452,6 +460,7 @@ create_survival_gradient_effect <- function(multi_param_results, monthly_results
 #' @importFrom dplyr group_by summarise filter inner_join
 #' 
 #' @export
+#' @importFrom dplyr filter summarise group_by inner_join
 create_transition_rates_plot <- function(transition_data, 
                                          significance_threshold = 0.01,
                                          reference_temps = c(8, 12, 16),
@@ -497,4 +506,218 @@ create_transition_rates_plot <- function(transition_data,
           panel.spacing = unit(x = 0.5, units = "lines"))
   
   return(plot)
+}
+
+#' Create model parameter elasticity figure
+#'
+#' @description 
+#' This function creates a figure showing the sensitivity of population growth rate
+#' and phosphorus content to changes in underlying model parameters.
+#'
+#' @param elasticity_results Data table with model parameter elasticity results
+#'
+#' @return A ggplot object for the model parameter elasticity figure
+#' @export
+#' @importFrom scales trans_new label_percent
+create_model_parameter_elasticity_figure <- function(elasticity_results) {
+  # Define parameter categories for grouping and coloring
+  param_categories <- data.frame(
+    parameter_name = c(
+      "growth_rate_coef", "growth_rate_intercept", "L_max",
+      "molt_cycle_a", "molt_cycle_b", "molt_cycle_c", "molt_cycle_d",
+      "sexratio", "gravid", "fertil_A1", "fertil_A2", "fertil_A3"
+    ),
+    category = c(
+      rep("Growth", 3),
+      rep("Molt Cycle", 4),
+      rep("Reproduction", 2),
+      rep("Fertility", 3)
+    ),
+    display_name = c(
+      "Growth rate: Temperature coef.", "Growth rate: Intercept", "Maximum size (L_max)",
+      "Molt cycle: Parameter a", "Molt cycle: Parameter b", "Molt cycle: Parameter c", "Molt cycle: Parameter d",
+      "Sex ratio", "Proportion gravid", "Fertility: A1", "Fertility: A2", "Fertility: A3"
+    )
+  )
+  
+  # Add category and display name to results
+  results_with_categories <- merge(
+    elasticity_results,
+    param_categories,
+    by = "parameter_name",
+    all.x = TRUE
+  )
+  
+  # Set factor levels for proper ordering in plots
+  results_with_categories$display_name <- factor(
+    results_with_categories$display_name,
+    levels = param_categories$display_name
+  )
+  
+  results_with_categories$category <- factor(
+    results_with_categories$category,
+    levels = c("Growth", "Molt Cycle", "Reproduction", "Fertility")
+  )
+  
+  # Define colors palette
+  param_colors <- c(
+    # Growth parameters
+    "Growth rate: Temperature coef." = "#1a9850",
+    "Growth rate: Intercept" = "#66bd63",
+    "Maximum size (L_max)" = "#a6d96a",
+    
+    # Molt cycle parameters
+    "Molt cycle: Parameter a" = "#d73027",
+    "Molt cycle: Parameter b" = "#f46d43",
+    "Molt cycle: Parameter c" = "#fdae61",
+    "Molt cycle: Parameter d" = "#fee090",
+    
+    # Reproduction parameters
+    "Sex ratio" = "#4575b4",
+    "Proportion gravid" = "#74add1",
+    
+    # Fertility parameters
+    "Fertility: A1" = "#762a83",
+    "Fertility: A2" = "#9970ab",
+    "Fertility: A3" = "#c2a5cf"
+  )
+  
+  # Axis transformation
+  squeeze_trans <- scales::trans_new(
+    name = "squeeze",
+    transform = function(x) sign(x) * log1p(abs(x)),
+    inverse = function(x) sign(x) * (exp(abs(x)) - 1),
+    domain = c(-Inf, Inf)
+  )
+  
+  # Create temperature label
+  temp_labels <- data.frame(
+    theta = unique(results_with_categories$theta),
+    label = paste0(unique(results_with_categories$theta), "\u00b0C")
+  )
+  
+  # Categories
+  categories_levels = levels(results_with_categories$category)
+  
+  # Figures list
+  figures <- setNames(
+    lapply(categories_levels, function(cat) {
+      list()
+    }),
+    categories_levels
+  )
+  
+  # Use patchwork to assemble the plots
+  library(patchwork)
+  
+  for (i in 1:length(categories_levels)) {
+    # Select sub-data
+    data = results_with_categories[category == categories_levels[i]]
+    
+    # Sub-figure A: Sensitivity of asymptotic growth rate (\u03bb) by parameter type
+    lambda_plot = ggplot(data)  +
+      # Scales
+      scale_x_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0, 1, by = 0.05), labels = scales::label_percent(suffix = ""), expand = c(0.01, 0.01)) +
+      scale_color_manual(values = param_colors, name = "Parameter") +
+      
+      # Background
+      geom_vline(xintercept = c(0.25, 0.50, 0.75), col = "grey75", linewidth = 0.5, linetype = 2) +
+      geom_hline(yintercept = 0, col = "black", linewidth = 0.5) +
+      
+      # Plot lines
+      stat_ecdf(aes(y = -lambda_elasticity*100, color = display_name), 
+                geom = "line", pad = FALSE, linewidth = 1) +
+      
+      # Temperature labels in bottom-right corner of each facet
+      geom_label(data = temp_labels, aes(label = label),
+                 x = Inf, y = -Inf, hjust = 1, vjust = 0,
+                 label.padding = unit(0.15, "lines"),
+                 label.size = 0,
+                 label.r = unit(0, "lines"),
+                 fill = "white",
+                 alpha = 0.7,
+                 family = "Roboto-Bold", size = 3.5, color = "black") +
+      
+      # Facets
+      facet_wrap( ~ theta, ncol = 3) +
+      
+      # Labels
+      labs(
+        y = "Change in \u03bb (%)",
+        x = "Cumulative proportion of simulations (%)"
+      ) +
+      
+      # Theme
+      theme_custom() +
+      theme(
+        aspect.ratio = 1,
+        strip.background = element_blank(),
+        strip.text = element_blank(),
+        legend.position = "none",
+        plot.margin = margin(t = 2, b = 0, l = 2, r = 2),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()
+      )
+    
+    # Sub-figure B: Sensitivity of phosphorus percentage (%P) by parameter type
+    p_plot = ggplot(data) +
+      # Scales
+      scale_x_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0, 1, by = 0.05), labels = scales::label_percent(suffix = ""), expand = c(0.01, 0.01)) +
+      scale_color_manual(values = param_colors, name = "Parameter") +
+      
+      # Mapping
+      aes(y = -P_elasticity*100, color = display_name) +
+      
+      # Background
+      geom_vline(xintercept = c(0.25, 0.50, 0.75), col = "grey75", linewidth = 0.5, linetype = 2) +
+      geom_hline(yintercept = 0, col = "black", linewidth = 0.5) +
+      
+      # Plot lines
+      stat_ecdf(geom = "line", pad = FALSE, linewidth = 1) +
+      
+      # Temperature labels in bottom-right corner of each facet
+      geom_label(data = temp_labels, aes(label = label),
+                 x = Inf, y = -Inf, hjust = 1, vjust = 0,
+                 label.padding = unit(0.15, "lines"),
+                 label.size = 0,
+                 label.r = unit(0, "lines"),
+                 fill = "white",
+                 alpha = 0.7,
+                 family = "Roboto-Bold", size = 3.5, color = "black") +
+      
+      # Facets
+      facet_wrap( ~ theta) +
+      
+      # Labels
+      labs(x = "Cumulative proportion of simulations (%)", 
+           y = "Change in populational P rate (%)"
+      ) +
+      
+      # Theme
+      theme_custom() +
+      theme(
+        aspect.ratio = 1,
+        strip.background = element_blank(),
+        strip.text = element_blank(),
+        legend.position = "bottom",
+        plot.margin = margin(t = 0, b = 2, l = 2, r = 2)
+      )
+    
+    # Assemble the plots
+    final_plot <- (lambda_plot / p_plot) +
+      plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')')  +
+      # Adjust layout
+      plot_layout(
+        heights = c(1, 1),    # Equal height for both plots
+        guides = "collect"
+      ) &
+      theme(legend.position = "bottom")
+    
+    # Figures saving
+    figures[[categories_levels[i]]] = final_plot
+    
+  }
+  
+  return(figures)
 }

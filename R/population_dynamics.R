@@ -5,9 +5,9 @@
 # Date: April 2025
 ###############################################################################
 
-###############################################################################
+# _____________________________________________________________________________
 # GROWTH RATES MATRIX FUNCTION
-###############################################################################
+# _____________________________________________________________________________
 
 #' Population growth rates matrix determination
 #' 
@@ -16,13 +16,15 @@
 #' of a population of gammarus whose growth is governed by a temperature-dependent logistic model.
 #' 
 #' @param N_ind Integer. Total number of individuals in each class needed for determining 
-#'        the transition rate. Default is 10,000.
+#'        the transition rate (default: 10,000).
 #' @param L_max Numeric. Maximum size of individuals for the logistic growth model.
 #' @param delta_t Numeric. Time step in days.
 #' @param theta Numeric. Target temperature in Celsius.
 #' @param class_lim Numeric vector. Boundaries of the different classes; note that the upper limit 
 #'        must be specified.
-#' @param class_names Character vector. Names of the different classes. Default is NULL.
+#' @param class_names Character vector. Names of the different classes (default: \NULL).
+#' @param growth_rate_coef Numeric. Coefficient for temperature in growth rate equation (default: 0.0014).
+#' @param growth_rate_intercept Numeric. Intercept in growth rate equation (default: -0.0024).
 #' 
 #' @return A data frame representing the transition matrix for the given parameters, with rows and
 #'         columns named according to class_names if provided.
@@ -48,7 +50,10 @@
 #' }
 #' 
 #' @export
-growth_rates_matrix = function(N_ind = 10000, L_max, delta_t, theta, class_lim, class_names = NULL) {
+growth_rates_matrix <- function(
+    N_ind = 10000, L_max, delta_t, theta, class_lim, class_names = NULL,
+    growth_rate_coef = 0.0014, growth_rate_intercept = -0.0024) {
+  
   # Raise an error if the number of class names does not correspond to the number of class limit intervals.
   if (!is.null(class_names) & length(class_lim)-1 != length(class_names)) {
     stop(sprintf("The number of class names (%i) does not correspond to the number of class limit intervals (%i): 'length(class_names) != length(class_lim)-1'. Did you forget one class limit (usually the upper limit)?", length(class_names), length(class_lim)-1))
@@ -56,13 +61,17 @@ growth_rates_matrix = function(N_ind = 10000, L_max, delta_t, theta, class_lim, 
   
   # Initialization
   MAT = data.frame(matrix(data = 0, 
-                           nrow = length(class_lim)-1, 
-                           ncol = length(class_lim)-1, 
-                           dimnames = list(class_names, class_names)))
+                          nrow = length(class_lim)-1, 
+                          ncol = length(class_lim)-1, 
+                          dimnames = list(class_names, class_names)))
   
   for (cla in 1:(length(class_lim)-1)) {
     size_init = seq(class_lim[cla], class_lim[cla+1], length.out = N_ind)
-    size_end = L_max / (1 + ((L_max/size_init) - 1) * exp(-(0.0014 * theta - 0.0024) * delta_t))
+    
+    # Calculate growth rate
+    growth_rate = growth_rate_coef * theta + growth_rate_intercept
+    
+    size_end = L_max / (1 + ((L_max/size_init) - 1) * exp(-growth_rate * delta_t))
     
     for (i in 1:(length(class_lim)-1)) {
       MAT[i, cla] = length(which(size_end >= class_lim[i] & size_end < class_lim[i+1]))/N_ind
@@ -86,6 +95,9 @@ growth_rates_matrix = function(N_ind = 10000, L_max, delta_t, theta, class_lim, 
 #' @return A data frame in long format containing transition rates for each temperature
 #' 
 #' @export
+#' @importFrom dplyr mutate
+#' @importFrom tibble rownames_to_column
+#' @importFrom tidyr pivot_longer
 calculate_transition_rates <- function(temp_range, L_max, delta_t, class_lim, class_names) {
   # Initialize empty data frame
   data_for_plot <- data.frame()
@@ -118,9 +130,9 @@ calculate_transition_rates <- function(temp_range, L_max, delta_t, class_lim, cl
   return(data_for_plot)
 }
 
-###############################################################################
+# _____________________________________________________________________________
 # FECONDITY RATES MATRIX FUNCTION
-###############################################################################
+# _____________________________________________________________________________
 
 #' Population fecundity rates matrix determination
 #' 
@@ -133,8 +145,12 @@ calculate_transition_rates <- function(temp_range, L_max, delta_t, class_lim, cl
 #'        must be taken into account.
 #' @param delta_t Numeric. Time step in days.
 #' @param theta Numeric. Target temperature in Celsius.
-#' @param class_names Character vector. Names of the different classes. Default is NULL.
-#' 
+#' @param class_names Character vector. Names of the different classes (default: \NULL).
+#' @param molt_cycle_a Numeric. Parameter 'beta_1' in molt cycle equation (default: 30.61).
+#' @param molt_cycle_b Numeric. Parameter 'alpha_1' in molt cycle equation (default: -0.39).
+#' @param molt_cycle_c Numeric. Parameter 'beta_2' in molt cycle equation (default: 0.01).
+#' @param molt_cycle_d Numeric. Parameter 'alpha_2' in molt cycle equation (default: 0.05).
+#'  
 #' @return A data frame representing the fecundity matrix for the given parameters, with rows and
 #'         columns named according to class_names if provided.
 #'
@@ -142,7 +158,7 @@ calculate_transition_rates <- function(temp_range, L_max, delta_t, class_lim, cl
 #' The function creates a fecundity matrix where only the first row contains non-zero values,
 #' representing the production of juveniles (first size class) by adults of different classes.
 #' The molting cycle duration (which affects fecundity) is calculated based on temperature using:
-#' d = (30.61 - 0.39*θ) / (0.01 + 0.05*θ)
+#' d = (m_a + m_b*\u03b8) / (m_c + m_d*\u03b8)
 #' 
 #' @examples
 #' \dontrun{
@@ -160,7 +176,10 @@ calculate_transition_rates <- function(temp_range, L_max, delta_t, class_lim, cl
 #' }
 #' 
 #' @export
-fecondity_rates_matrix = function(sexratio, gravid, fertil, delta_t, theta, class_names = NULL) {
+fecondity_rates_matrix <- function(
+    sexratio, gravid, fertil, delta_t, theta, class_names = NULL,
+    molt_cycle_a = 30.61, molt_cycle_b = -0.39, molt_cycle_c = 0.01, molt_cycle_d = 0.05) {
+  
   # Raise an error if number of class names does not correspond to the number of fertility rates.
   if (!is.null(class_names) & length(fertil) != length(class_names)) {
     stop(sprintf("The number of class names (%i) does not correspond to the number of fertility rates (%i): 'length(class_names) != length(fertil)'. Did you forget something?", length(class_names), length(fertil)))
@@ -172,17 +191,17 @@ fecondity_rates_matrix = function(sexratio, gravid, fertil, delta_t, theta, clas
                           ncol = length(fertil), 
                           dimnames = list(class_names, class_names)))
   
-  # Molting cycle duration (= reproduction cycle) 
-  mold_cycle_time = (30.61 - 0.39 * theta) / (0.01 + 0.05 * theta)
+  # Molting cycle duration (= reproduction cycle)
+  mold_cycle_time = (molt_cycle_a + molt_cycle_b * theta) / (molt_cycle_c + molt_cycle_d * theta)
   
   MAT[1,] = sexratio * fertil * gravid * delta_t / mold_cycle_time
   
   return(MAT)
 }
 
-###############################################################################
+# _____________________________________________________________________________
 # SURVIVAL RATES MATRIX FUNCTION
-###############################################################################
+# _____________________________________________________________________________
 
 #' Survival rates matrix determination
 #' 
@@ -281,9 +300,9 @@ extract_matrix_for_temp <- function(matrix_data, temps, current_temp) {
   return(sub_matrix)
 }
 
-###############################################################################
+# _____________________________________________________________________________
 # LESLIE MATRIX FUNCTION
-###############################################################################
+# _____________________________________________________________________________
 
 #' Leslie matrix determination
 #' 
@@ -341,9 +360,9 @@ Leslie_matrix = function(transition_matrix, fecondity_matrix, survival_matrix, c
   return(MAT)
 }
 
-###############################################################################
+# _____________________________________________________________________________
 # FIND LAMBDA AND SSD FUNCTION
-###############################################################################
+# _____________________________________________________________________________
 
 #' Determination of lambda and stable stage distribution
 #' 
@@ -402,9 +421,9 @@ find_lambda_SSD = function(Leslie_matrix, class_names = NULL) {
   return(list(lambda = lambda, SSD = SSD))
 }
 
-###############################################################################
+# _____________________________________________________________________________
 # ELASTICITY MATRIX FUNCTION
-###############################################################################
+# _____________________________________________________________________________
 
 #' Elasticity matrix determination
 #' 

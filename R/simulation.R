@@ -332,3 +332,160 @@ calculate_comprehensive_elasticity <- function(param_set, class_names, transitio
   
   return(elasticity_results)
 }
+
+#' Calculate elasticity based on underlying model parameters
+#'
+#' @description 
+#' This function calculates elasticity by modifying the underlying model parameters
+#' that determine the growth and fecundity matrices, then measuring the effect on lambda and phosphorus.
+#'
+#' @param param_set A single parameter set
+#' @param class_names Vector of size class names
+#' @param transition_matrix Original growth transition matrix
+#' @param fecondity_matrix Original fecundity matrix
+#' @param stoichiometry_array Matrix with stoichiometric data
+#' @param element_names Vector of element names
+#' @param L_max Maximum size for growth model
+#' @param delta_t Time step in days
+#' @param theta Current temperature in Celsius
+#' @param class_lim Vector of size class limits
+#' @param sexratio Sex ratio (proportion of females)
+#' @param gravid Proportion of gravid females
+#' @param fertil Vector of fertility rates by size class
+#' @param parameter_name Name of the parameter to modify
+#'
+#' @return A data.table with elasticity results
+#' @export
+calculate_model_parameter_elasticity <- function(param_set, class_names, 
+                                                 transition_matrix, fecondity_matrix, 
+                                                 stoichiometry_array, element_names,
+                                                 L_max, delta_t, theta, class_lim,
+                                                 sexratio, gravid, fertil, 
+                                                 growth_rate_coef, growth_rate_intercept,          
+                                                 molt_cycle_a, molt_cycle_b,                     
+                                                 molt_cycle_c, molt_cycle_d,
+                                                 parameter_name) {
+  # Extract baseline values
+  lambda0 <- param_set$lambda
+  percentP0 <- param_set$mean_percentP
+  
+  surv_rates <- c(
+    param_set$surv_rate_J1,
+    param_set$surv_rate_J2,
+    param_set$surv_rate_A1,
+    param_set$surv_rate_A2,
+    param_set$surv_rate_A3
+  )
+  
+  # Initialize modified parameters with original values
+  mod_transition_matrix <- transition_matrix
+  mod_fecondity_matrix <- fecondity_matrix
+  
+  # Modify specific growth parameter based on parameter_name
+  if (parameter_name == "growth_rate_coef") {
+    growth_rate_coef = growth_rate_coef * 0.9
+  } else if (parameter_name == "growth_rate_intercept") {
+    growth_rate_intercept = growth_rate_intercept * 0.9
+  } else if (parameter_name == "L_max") {
+    L_max = L_max * 0.9
+  }
+  
+  # Recalculate growth transition matrix with modified parameter
+  mod_transition_matrix <- growth_rates_matrix(
+    N_ind = 10000, 
+    L_max = L_max, 
+    delta_t = delta_t, 
+    theta = theta, 
+    class_lim = class_lim, 
+    class_names = class_names,
+    growth_rate_coef = growth_rate_coef,
+    growth_rate_intercept = growth_rate_intercept
+  )
+  
+  # Modify specific fecundity parameter based on parameter_name
+  if (parameter_name == "molt_cycle_a") {
+    molt_cycle_a = molt_cycle_a * 0.9
+  } else if (parameter_name == "molt_cycle_b") {
+    molt_cycle_b = molt_cycle_b * 0.9
+  } else if (parameter_name == "molt_cycle_c") {
+    molt_cycle_c = molt_cycle_c * 0.9
+  } else if (parameter_name == "molt_cycle_d") {
+    molt_cycle_d = molt_cycle_d * 0.9
+  } else if (parameter_name == "sexratio") {
+    sexratio = sexratio * 0.9
+  } else if (parameter_name == "gravid") {
+    gravid = gravid * 0.9
+  } else if (grepl("^fertil_", parameter_name)) {
+    # Modify a specific fertility rate
+    # Extract class index from parameter name (e.g., "fertil_A1" -> extract "A1")
+    class_id <- sub("fertil_", "", parameter_name)
+    class_idx <- match(class_id, class_names)
+    
+    if (!is.na(class_idx)) {
+      # Only modify if the class exists
+      fertil[class_idx] <- fertil[class_idx] * 0.9  # 10% reduction
+    }
+  }
+  
+  # Recalculate fecundity matrix with modified parameter
+  mod_fecondity_matrix <- fecondity_rates_matrix(
+    sexratio = sexratio, 
+    gravid = gravid, 
+    fertil = fertil, 
+    delta_t = delta_t, 
+    theta = theta, 
+    class_names = class_names,
+    molt_cycle_a = molt_cycle_a,
+    molt_cycle_b = molt_cycle_b,
+    molt_cycle_c = molt_cycle_c,
+    molt_cycle_d = molt_cycle_d
+  )
+ 
+  # Calculate survival matrix (unchanged)
+  surv_mat <- survival_rates_matrix(
+    survival_rates = surv_rates, 
+    class_names = class_names
+  )
+  
+  # Calculate modified Leslie matrix
+  mod_leslie_mat <- Leslie_matrix(
+    transition_matrix = mod_transition_matrix, 
+    fecondity_matrix = mod_fecondity_matrix,
+    survival_matrix = surv_mat, 
+    class_names = class_names
+  )
+  
+  # Calculate lambda and SSD from modified Leslie matrix
+  mod_lambda_SSD <- find_lambda_SSD(mod_leslie_mat, class_names)
+  mod_lambda <- mod_lambda_SSD[[1]]
+  mod_SSD <- mod_lambda_SSD[[2]]
+  
+  # Calculate phosphorus content with modified SSD
+  e_rates <- elem_rates(
+    population_vector = mod_SSD,
+    stoichiometry_array = stoichiometry_array,
+    element_names = element_names
+  )
+  
+  # Extract modified phosphorus percentage
+  mod_percentP <- e_rates[['percent_elem_pop_biomass']][[paste0("percent", element_names[1])]]
+  
+  # Calculate elasticity
+  lambda_elasticity <- (lambda0 - mod_lambda) / lambda0
+  P_elasticity <- (percentP0 - mod_percentP) / percentP0
+  
+  # Store results
+  elasticity_result <- data.table(
+    sample_id = param_set$iter,
+    theta = theta,
+    parameter_name = parameter_name,
+    lambda0 = lambda0,
+    mod_lambda = mod_lambda,
+    percentP0 = percentP0,
+    mod_percentP = mod_percentP,
+    lambda_elasticity = lambda_elasticity,
+    P_elasticity = P_elasticity
+  )
+  
+  return(elasticity_result)
+}

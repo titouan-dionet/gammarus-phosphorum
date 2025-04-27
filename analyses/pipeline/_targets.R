@@ -127,7 +127,13 @@ tar_plan(
       fertil = c(0, 0, 3.6, 5.1, 9.2),          # Fertility rates by size class
       names_class = c("J1", "J2", "A1", "A2", "A3"), # Size class names
       element_names = c("P"),                   # Elemental names
-      Theta_vec = c(8, 12, 16)                  # Temperatures in °C
+      Theta_vec = c(8, 12, 16),                 # Temperatures in °C
+      growth_rate_coef = 0.0014,                # Growth rate coefficient in growth model
+      growth_rate_intercept = -0.0024,          # Growth rate intercept in growth model
+      molt_cycle_a = 30.61,                     # Parameter beta_1 in molt cycle equation
+      molt_cycle_b = -0.39,                     # Parameter alpha_1 in molt cycle equation
+      molt_cycle_c = 0.01,                      # Parameter beta_2 in molt cycle equation
+      molt_cycle_d = 0.05                       # Parameter alpha_2 in molt cycle equation
     ),
     description = "Base parameters for population model and simulations"
   ),
@@ -189,7 +195,8 @@ tar_plan(
       delta_t = base_params$delta_t, 
       theta = temp_loop, 
       class_lim = base_params$lim_class, 
-      class_names = base_params$names_class
+      class_names = base_params$names_class,
+      
     ),
     pattern = map(temp_loop),
     description = "Growth transition matrices for each temperature"
@@ -423,123 +430,7 @@ tar_plan(
   ),
   
   # ______________________________________________________________________________
-  # Simulation 3: Elasticity analysis ----
-  # ______________________________________________________________________________
-  
-  # Sample parameters for elasticity analysis
-  tar_target(
-    elasticity_samples,
-    sample_elasticity_parameters(multi_param_results, n_samples = nrow(multi_param_results)), # can be change to less samples if needed
-    description = "Sampled parameter sets for elasticity analysis"
-  ),
-  
-  # Sample parameters for elasticity analysis (using samples)
-  tar_target(
-    comprehensive_elasticity_results,
-    {
-      # Initialize results list
-      all_results <- list()
-      
-      # List of parameter types to analyze
-      param_types <- c("survival", "fecundity", "growth")
-      
-      for (param_type in param_types) {
-        cat("\nCalculating elasticity for parameter type:", param_type, "\n")
-        
-        # Process data in batches to efficiently manage memory
-        n_rows <- nrow(elasticity_samples)
-        batch_size <- 500
-        n_batches <- ceiling(n_rows / batch_size)
-        
-        # Initialize list to store results
-        type_results <- vector("list", n_batches)
-        
-        # Process each batch
-        for (batch_idx in 1:n_batches) {
-          # Define start and end indices for this batch
-          start_idx <- (batch_idx - 1) * batch_size + 1
-          end_idx <- min(batch_idx * batch_size, n_rows)
-          
-          # Process each row in the current batch
-          batch_results <- lapply(start_idx:end_idx, function(i) {
-            # Extract sample
-            param_set <- elasticity_samples[i, ]
-            
-            # Get temperature
-            theta <- param_set$theta
-            
-            # Get appropriate matrices for this temperature
-            transition_matrix <- extract_matrix_for_temp(
-              matrix_data = trans_mat_by_temp, 
-              temps = base_params$Theta_vec, 
-              current_temp = theta
-            )
-            
-            fecondity_matrix <- extract_matrix_for_temp(
-              matrix_data = feco_mat_by_temp, 
-              temps = base_params$Theta_vec, 
-              current_temp = theta
-            )
-            
-            # Calculate elasticity for the current parameter type
-            calculate_comprehensive_elasticity(
-              param_set = param_set,
-              class_names = base_params$names_class,
-              transition_matrix = transition_matrix,
-              fecondity_matrix = fecondity_matrix,
-              stoichiometry_array = mat_sto,
-              element_names = base_params$element_names,
-              parameter_type = param_type
-            )
-          })
-          
-          # Combine results from this batch
-          type_results[[batch_idx]] <- rbindlist(batch_results)
-          
-          # Display progress
-          cat("Elasticity for", param_type, ": Completed batch", batch_idx, "of", n_batches, "\n")
-        }
-        
-        # Combine all batches for this parameter type
-        all_results[[param_type]] <- rbindlist(type_results)
-      }
-      
-      # Combine all parameter types
-      final_results <- rbindlist(all_results)
-      final_results[, parameter_type := factor(parameter_type, levels = param_types)]
-      
-      return(final_results)
-    },
-    description = "Complete elasticity analysis for survival, fecundity, and growth parameters"
-  ),
-  
-  # Calculate summary statistics for comprehensive elasticity results
-  tar_target(
-    comprehensive_elasticity_summary,
-    comprehensive_elasticity_results[, .(
-      mean_lambda_elasticity = mean(lambda_elasticity),
-      sd_lambda_elasticity = sd(lambda_elasticity),
-      mean_P_elasticity = mean(P_elasticity),
-      sd_P_elasticity = sd(P_elasticity)
-    ), by = .(theta, parameter_type, parameter_name, class_affected)],
-    description = "Summary statistics of comprehensive elasticity analysis"
-  ),
-  
-  # Save comprehensive elasticity results
-  tar_target(
-    comprehensive_elasticity_results_save_path,
-    {
-      file_path = file.path(sim_output_dir, "comprehensive_elasticity_results.csv")
-      fwrite(comprehensive_elasticity_results, 
-             file = file_path, 
-             sep = ";", dec = ",")
-      return(file_path)
-    },
-    description = "Save results of comprehensive elasticity analysis"
-  ),
-
-  # ______________________________________________________________________________
-  # Simulation 4: Monthly variation ----
+  # Simulation 3: Monthly variation ----
   # ______________________________________________________________________________
   
   # Run monthly simulations for each temperature
@@ -676,6 +567,254 @@ tar_plan(
   ),
   
   # ______________________________________________________________________________
+  # Elasticity analysis: Survival, fecundity and growth ----
+  # ______________________________________________________________________________
+  
+  # Sample parameters for elasticity analysis
+  tar_target(
+    elasticity_samples,
+    sample_elasticity_parameters(multi_param_results, n_samples = nrow(multi_param_results)), # can be change to less samples if needed
+    description = "Sampled parameter sets for elasticity analysis"
+  ),
+  
+  # Sample parameters for elasticity analysis (using samples)
+  tar_target(
+    comprehensive_elasticity_results,
+    {
+      # Initialize results list
+      all_results <- list()
+      
+      # List of parameter types to analyze
+      param_types <- c("survival", "fecundity", "growth")
+      
+      for (param_type in param_types) {
+        cat("\nCalculating elasticity for parameter type:", param_type, "\n")
+        
+        # Process data in batches to efficiently manage memory
+        n_rows <- nrow(elasticity_samples)
+        batch_size <- 500
+        n_batches <- ceiling(n_rows / batch_size)
+        
+        # Initialize list to store results
+        type_results <- vector("list", n_batches)
+        
+        # Process each batch
+        for (batch_idx in 1:n_batches) {
+          # Define start and end indices for this batch
+          start_idx <- (batch_idx - 1) * batch_size + 1
+          end_idx <- min(batch_idx * batch_size, n_rows)
+          
+          # Process each row in the current batch
+          batch_results <- lapply(start_idx:end_idx, function(i) {
+            # Extract sample
+            param_set <- elasticity_samples[i, ]
+            
+            # Get temperature
+            theta <- param_set$theta
+            
+            # Get appropriate matrices for this temperature
+            transition_matrix <- extract_matrix_for_temp(
+              matrix_data = trans_mat_by_temp, 
+              temps = base_params$Theta_vec, 
+              current_temp = theta
+            )
+            
+            fecondity_matrix <- extract_matrix_for_temp(
+              matrix_data = feco_mat_by_temp, 
+              temps = base_params$Theta_vec, 
+              current_temp = theta
+            )
+            
+            # Calculate elasticity for the current parameter type
+            calculate_comprehensive_elasticity(
+              param_set = param_set,
+              class_names = base_params$names_class,
+              transition_matrix = transition_matrix,
+              fecondity_matrix = fecondity_matrix,
+              stoichiometry_array = mat_sto,
+              element_names = base_params$element_names,
+              parameter_type = param_type
+            )
+          })
+          
+          # Combine results from this batch
+          type_results[[batch_idx]] <- rbindlist(batch_results)
+          
+          # Display progress
+          cat("Elasticity for", param_type, ": Completed batch", batch_idx, "of", n_batches, "\n")
+        }
+        
+        # Combine all batches for this parameter type
+        all_results[[param_type]] <- rbindlist(type_results)
+      }
+      
+      # Combine all parameter types
+      final_results <- rbindlist(all_results)
+      final_results[, parameter_type := factor(parameter_type, levels = param_types)]
+      
+      return(final_results)
+    },
+    description = "Complete elasticity analysis for survival, fecundity, and growth parameters"
+  ),
+  
+  # Calculate summary statistics for comprehensive elasticity results
+  tar_target(
+    comprehensive_elasticity_summary,
+    comprehensive_elasticity_results[, .(
+      mean_lambda_elasticity = mean(lambda_elasticity),
+      sd_lambda_elasticity = sd(lambda_elasticity),
+      mean_P_elasticity = mean(P_elasticity),
+      sd_P_elasticity = sd(P_elasticity)
+    ), by = .(theta, parameter_type, parameter_name, class_affected)],
+    description = "Summary statistics of comprehensive elasticity analysis"
+  ),
+  
+  # Save comprehensive elasticity results
+  tar_target(
+    comprehensive_elasticity_results_save_path,
+    {
+      file_path = file.path(sim_output_dir, "comprehensive_elasticity_results.csv")
+      fwrite(comprehensive_elasticity_results, 
+             file = file_path, 
+             sep = ";", dec = ",")
+      return(file_path)
+    },
+    description = "Save results of comprehensive elasticity analysis"
+  ),
+  
+  # ______________________________________________________________________________
+  # Elasticity analysis: Model Parameter Elasticity Analysis ----
+  # ______________________________________________________________________________
+  
+  # Define model parameters to analyze
+  tar_target(
+    model_parameters_to_analyze,
+    c(
+      # Growth parameters
+      "growth_rate_coef",          # Coefficient of temperature in growth rate equation (0.0014)
+      "growth_rate_intercept",     # Intercept in growth rate equation (-0.0024)
+      "L_max",                     # Maximum size
+      
+      # Reproduction parameters
+      "molt_cycle_a",              # Parameter a in molt cycle equation (30.61)
+      "molt_cycle_b",              # Parameter b in molt cycle equation (-0.39)
+      "molt_cycle_c",              # Parameter c in molt cycle equation (0.01)
+      "molt_cycle_d",              # Parameter d in molt cycle equation (0.05)
+      "sexratio",                  # Sex ratio
+      "gravid",                    # Proportion of gravid females
+      
+      # Fertility rates by class (only for classes with fertility > 0)
+      "fertil_A1",                 # Fertility of A1 class
+      "fertil_A2",                 # Fertility of A2 class
+      "fertil_A3"                  # Fertility of A3 class
+    ),
+    description = "List of model parameters to analyze for elasticity"
+  ),
+  
+  # Run model parameter elasticity analysis
+  tar_target(
+    model_parameter_elasticity_results,
+    {
+      # Initialize results list
+      all_results <- list()
+      
+      # Process a subset of samples for efficiency
+      sample_size <- 1000  # Adjust as needed
+      set.seed(42)
+      selected_samples <- elasticity_samples[sample(1:nrow(elasticity_samples), sample_size)]
+      
+      # For each parameter
+      for (param in model_parameters_to_analyze) {
+        cat("\nCalculating elasticity for model parameter:", param, "\n")
+        
+        # Process samples
+        param_results <- lapply(1:nrow(selected_samples), function(i) {
+          # Extract sample
+          param_set <- selected_samples[i, ]
+          
+          # Get temperature
+          theta <- param_set$theta
+          
+          # Get appropriate matrices for this temperature
+          transition_matrix <- extract_matrix_for_temp(
+            matrix_data = trans_mat_by_temp, 
+            temps = base_params$Theta_vec, 
+            current_temp = theta
+          )
+          
+          fecondity_matrix <- extract_matrix_for_temp(
+            matrix_data = feco_mat_by_temp, 
+            temps = base_params$Theta_vec, 
+            current_temp = theta
+          )
+          
+          # Calculate elasticity for this parameter
+          calculate_model_parameter_elasticity(
+            param_set = param_set,
+            class_names = base_params$names_class,
+            transition_matrix = transition_matrix,
+            fecondity_matrix = fecondity_matrix,
+            stoichiometry_array = mat_sto,
+            element_names = base_params$element_names,
+            L_max = base_params$L_max,
+            delta_t = base_params$delta_t,
+            theta = theta,
+            class_lim = base_params$lim_class,
+            sexratio = base_params$sexratio,
+            gravid = base_params$gravid,
+            fertil = base_params$fertil,
+            growth_rate_coef = base_params$growth_rate_coef, 
+            growth_rate_intercept = base_params$growth_rate_intercept,          
+            molt_cycle_a = base_params$molt_cycle_a, 
+            molt_cycle_b = base_params$molt_cycle_b,                     
+            molt_cycle_c = base_params$molt_cycle_c, 
+            molt_cycle_d = base_params$molt_cycle_d,
+            parameter_name = param
+          )
+        })
+        
+        # Combine results for this parameter
+        all_results[[param]] <- rbindlist(param_results)
+        
+        # Display progress
+        cat("Completed elasticity analysis for parameter:", param, "\n")
+      }
+      
+      # Combine all parameter results
+      final_results <- rbindlist(all_results)
+      
+      return(final_results)
+    },
+    description = "Elasticity analysis for model parameters rather than matrix elements"
+  ),
+  
+  # Calculate summary statistics for model parameter elasticity
+  tar_target(
+    model_parameter_elasticity_summary,
+    model_parameter_elasticity_results[, .(
+      mean_lambda_elasticity = mean(lambda_elasticity),
+      sd_lambda_elasticity = sd(lambda_elasticity),
+      mean_P_elasticity = mean(P_elasticity),
+      sd_P_elasticity = sd(P_elasticity),
+      n_samples = .N
+    ), by = .(theta, parameter_name)],
+    description = "Summary statistics of model parameter elasticity analysis"
+  ),
+  
+  # Save model parameter elasticity results
+  tar_target(
+    model_parameter_elasticity_save_path,
+    {
+      file_path = file.path(sim_output_dir, "model_parameter_elasticity_results.csv")
+      fwrite(model_parameter_elasticity_results, 
+             file = file_path, 
+             sep = ";", dec = ",")
+      return(file_path)
+    },
+    description = "Save results of model parameter elasticity analysis"
+  ),
+  
+  # ______________________________________________________________________________
   # Figure 1: Individual phosphorus rate ----
   # ______________________________________________________________________________
   
@@ -751,7 +890,10 @@ tar_plan(
   # Supplementary figures ----
   # ______________________________________________________________________________
 
-  # Temperature-dependent transition rates visualization
+  # ______________________________________________________________________________
+  # Figure S1: Temperature-dependent transition rates visualization ----
+  # ______________________________________________________________________________
+  
   # Generate temperature range for transition rates
   tar_target(
     temp_range_transition,
@@ -788,8 +930,9 @@ tar_plan(
     description = "Plot showing transition rates between size classes as a function of temperature"
   ),
   
-  
-  # Elasticities on fecundity and growth parameters
+  # ______________________________________________________________________________
+  # Figures S2 and S3: Elasticities on fecundity and growth parameters ----
+  # ______________________________________________________________________________
   # Create Figure S2
   tar_target(
     figure_S2,
@@ -808,6 +951,20 @@ tar_plan(
       create_comprehensive_elasticity_figure(comprehensive_elasticity_results, analysis_type = "growth")
     },
     description = "Figure S3: Sensitivity of population growth rate and phosphorus content to transition rates"
+  ),
+  
+  # ______________________________________________________________________________
+  # Figures S4: Model Parameter Elasticity Analysis ----
+  # ______________________________________________________________________________
+  
+  # Create Figures S4
+  tar_target(
+    figure_S4,
+    {
+      load_fonts
+      create_model_parameter_elasticity_figure(model_parameter_elasticity_results)
+    },
+    description = "Figure S4: Sensitivity analysis of underlying model parameters"
   ),
   
   # ______________________________________________________________________________
@@ -916,5 +1073,25 @@ tar_plan(
       dpi = 300
     ),
     description = "Saved Figure S3 in multiple formats"
+  ),
+  
+  # Save Figures S4
+  tar_target(
+    save_figure_S4,
+    {
+      names_figures = names(figure_S4)
+      for (sub_fig in 1:length(names_figures)) {
+        save_figure(
+          plot = figure_S4[[sub_fig]],
+          basename = paste0("figure_S4_model_parameter_elasticity_", names(figure_S4[sub_fig])),
+          dir = fig_output_dir,
+          width = 2400,
+          height = 2000,
+          units = "px",
+          dpi = 300
+        )
+      }
+    },
+    description = "Saved Figures S4 in multiple formats"
   )
 )
