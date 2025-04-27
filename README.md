@@ -13,11 +13,10 @@ gammarus-phosphorum/
 │       └── _targets.R     # Pipeline definition using the targets package
 │
 ├── data/                  # Input data
-│   ├── raw_data/          # Raw measurement data
-│   │   ├── monthly_surv_rates_coulaud_2014.csv
-│   │   ├── phosphorus_measurements_2023_07.csv
-│   │   └── P_conc_range_2023_07.csv
-│   └── README.md
+│   └── raw_data/          # Raw measurement data
+│       ├── monthly_surv_rates_coulaud_2014.csv
+│       ├── phosphorus_measurements_2023_07.csv
+│       └── P_conc_range_2023_07.csv
 │
 ├── R/                     # Source code for the project
 │   ├── data_processing.R  # Data processing functions
@@ -31,8 +30,24 @@ gammarus-phosphorum/
 │
 ├── outputs/               # Generated output files (figures, results)
 │   ├── figures/           # Generated figures
+│   │   ├── figure_1_phosphorus_by_size_class.png/svg
+│   │   ├── figure_2_elasticity_analysis_survival.png/svg
+│   │   ├── figure_3_j1_a3_survival_effect.png/svg
+│   │   ├── figure_4_survival_gradient_effect.png/svg
+│   │   ├── figure_S1_temperature_transition_rates.png/svg
+│   │   ├── figure_S2_elasticity_analysis_fecundity.png/svg
+│   │   ├── figure_S3_elasticity_analysis_growth.png/svg
+│   │   └── figure_S4_model_parameter_elasticity_*.png/svg
 │   ├── pipeline/          # Pipeline visualization files
+│   │   ├── pipeline_post_execution.html
+│   │   └── pipeline_pre_execution.html
 │   ├── simulation_results/ # Simulation result data
+│   │   ├── annual_results.csv
+│   │   ├── comprehensive_elasticity_results.csv
+│   │   ├── model_parameter_elasticity_results.csv
+│   │   ├── monthly_results.csv
+│   │   ├── multi_param_results.csv
+│   │   └── single_param_results.csv
 │   └── _targets/          # Cache data for the targets pipeline
 │
 ├── fonts/                 # Custom fonts for figures
@@ -40,13 +55,16 @@ gammarus-phosphorum/
 │
 ├── tests/                 # Unit tests for R functions
 │   ├── testthat/          # Test files
+│   │   └── test-population_dynamics.R
 │   └── testthat.R         # Test runner
 │
+├── gammarus-phosphorum.Rproj # RStudio project file
 ├── DESCRIPTION            # Package description and dependencies
 ├── LICENSE.md             # GPL-3 license
 ├── CODE_OF_CONDUCT.md     # Contributor code of conduct
 ├── NAMESPACE              # Package namespace definitions
 ├── make.R                 # Main script to execute the pipeline
+├── _targets.yaml          # Targets configuration
 └── README.md              # This file
 ```
 
@@ -72,6 +90,7 @@ Key functions in `population_dynamics.R`:
 - `Leslie_matrix()`: Combines the above matrices into a complete population matrix
 - `find_lambda_SSD()`: Calculates asymptotic growth rate and stable stage distribution
 - `elasticity_matrix()`: Performs elasticity analysis on the Leslie matrix
+- `calculate_transition_rates()`: Calculates transition rates across a range of temperatures
 
 ### Stoichiometry Integration
 
@@ -90,8 +109,10 @@ The project includes multiple simulation approaches in `simulation.R`:
 
 1. **Single-parameter simulations**: Vary one survival rate while keeping others constant
 2. **Multi-parameter simulations**: Randomly vary all survival rates simultaneously
-3. **Elasticity analysis**: Examine how small changes in survival affect population growth and phosphorus content
-4. **Monthly variation**: Incorporate seasonal changes in survival rates
+3. **Monthly variation**: Incorporate seasonal changes in survival rates
+4. **Elasticity analysis**
+- `calculate_comprehensive_elasticity()`: Examines how small changes in survival, fecundity, or growth affect population growth and phosphorus content
+- `calculate_model_parameter_elasticity()`: Analyzes sensitivity to underlying model parameters
 
 ## Figures and Results
 
@@ -101,6 +122,8 @@ The pipeline generates four main figures:
 2. **Figure 2**: Sensitivity analysis showing the effects of survival rates on population growth and phosphorus content
 3. **Figure 3**: Effects of J1 and A3 survival on the relationship between growth rate and phosphorus
 4. **Figure 4**: Full parameter space exploration of growth rate and phosphorus relationship
+
+The pipeline also generates four supplementary figures.
 
 ## Getting Started
 
@@ -121,6 +144,7 @@ renv::restore()
 The analysis pipeline is managed using the `targets` package, which ensures reproducibility and efficient computation. To execute the complete pipeline:
 
 ```r
+# Execute the complete pipeline
 source("make.R")
 ```
 
@@ -130,6 +154,13 @@ This will:
 3. Generate a visualization of the planned pipeline
 4. Execute all analysis steps
 5. Create output figures and data files
+
+### Exploring Results
+
+After running the pipeline, you can explore the results:
+- Generated figures are saved in `outputs/figures/`
+- Simulation data is saved in `outputs/simulation_results/`
+- Pipeline visualization is available in `outputs/pipeline/`
 
 ## Development
 
