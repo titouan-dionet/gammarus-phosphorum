@@ -192,11 +192,11 @@ sample_elasticity_parameters <- function(multi_param_results, n_samples = 10000)
   return(sampled_results)
 }
 
-#' Calculate elasticity for a parameter set
+#' Calculate elasticity for different demographic parameters
 #'
 #' @description 
 #' This function calculates elasticity for a given parameter set by reducing
-#' each survival rate by 10% and measuring the effect on lambda and phosphorus
+#' survival, fecundity, or growth rates by 10% and measuring the effect on lambda and phosphorus
 #'
 #' @param param_set A single parameter set
 #' @param class_names Vector of size class names
@@ -204,11 +204,13 @@ sample_elasticity_parameters <- function(multi_param_results, n_samples = 10000)
 #' @param fecondity_matrix Fecundity matrix
 #' @param stoichiometry_array Matrix with stoichiometric data
 #' @param element_names Vector of element names
+#' @param parameter_type Type of parameter to modify: "survival", "fecundity", or "growth"
 #'
 #' @return A data.table with elasticity results
 #' @export
-calculate_elasticity <- function(param_set, class_names, transition_matrix, fecondity_matrix,
-                                 stoichiometry_array, element_names) {
+calculate_comprehensive_elasticity <- function(param_set, class_names, transition_matrix, 
+                                               fecondity_matrix, stoichiometry_array, element_names,
+                                               parameter_type = "survival") {
   # Extract parameters
   theta <- param_set$theta
   lambda0 <- param_set$lambda
@@ -225,26 +227,86 @@ calculate_elasticity <- function(param_set, class_names, transition_matrix, feco
   # Initialize results
   elasticity_results <- data.table()
   
-  # For each class, reduce survival by 10% and calculate effect
+  # For each class, reduce parameter by 10% and calculate effect
   for (j in seq_along(class_names)) {
-    # Modify survival rate
+    # Initialize matrices with original values
     mod_surv_rates <- surv_rates
-    mod_surv_rates[j] <- surv_rates[j] * 0.9  # 10% reduction
+    mod_transition_matrix <- transition_matrix
+    mod_fecondity_matrix <- fecondity_matrix
     
-    # Run simulation with modified rates
-    mod_results <- run_single_simulation(
-      theta = theta,
-      surv_rates = mod_surv_rates,
-      transition_matrix = transition_matrix,
-      fecondity_matrix = fecondity_matrix,
-      class_names = class_names,
+    # Modify the appropriate parameter based on parameter_type
+    if (parameter_type == "survival") {
+      # Modify survival rate (as in original function)
+      mod_surv_rates[j] <- surv_rates[j] * 0.9  # 10% reduction
+      parameter_name <- paste0("surv_", class_names[j])
+      
+    } else if (parameter_type == "fecundity") {
+      # Only apply to classes that have fecundity values > 0
+      if (sum(fecondity_matrix[1, j]) > 0) {
+        # Modify fecundity matrix
+        mod_fecondity_matrix[1, j] <- fecondity_matrix[1, j] * 0.9  # 10% reduction
+        parameter_name <- paste0("feco_", class_names[j])
+      } else {
+        # Skip classes with zero fecundity
+        next
+      }
+      
+    } else if (parameter_type == "growth") {
+      # Modify growth transition matrix
+      # We reduce all transition probabilities FROM this class by 10%
+      # We need to maintain column sums = 1
+      for (i in 1:nrow(transition_matrix)) {
+        if (i == j) {
+          # Calculate new diagonal element to maintain column sum
+          # First, sum all off-diagonal elements in the column
+          off_diag_sum <- sum(transition_matrix[, j]) - transition_matrix[j, j]
+          
+          # Reduce the off-diagonal sum by 10%
+          reduced_off_diag_sum <- off_diag_sum * 0.9
+          
+          # Calculate how much the off-diagonal sum was reduced by
+          reduction_amount <- off_diag_sum - reduced_off_diag_sum
+          
+          # Increase diagonal element by this amount to maintain column sum
+          mod_transition_matrix[j, j] <- transition_matrix[j, j] + reduction_amount
+        } else if (i > j) {
+          # Reduce transition probabilities to other classes by 10%
+          # (only elements below the diagonal, which represent growth)
+          mod_transition_matrix[i, j] <- transition_matrix[i, j] * 0.9
+        }
+        # Elements above diagonal (i < j) should remain 0
+      }
+      parameter_name <- paste0("growth_", class_names[j])
+    }
+    
+    # Calculate modified survival matrix
+    mod_surv_mat <- survival_rates_matrix(
+      survival_rates = mod_surv_rates,
+      class_names = class_names
+    )
+    
+    # Calculate modified Leslie matrix
+    mod_leslie_mat <- Leslie_matrix(
+      transition_matrix = mod_transition_matrix,
+      fecondity_matrix = mod_fecondity_matrix,
+      survival_matrix = mod_surv_mat,
+      class_names = class_names
+    )
+    
+    # Calculate lambda and SSD from modified Leslie matrix
+    mod_lambda_SSD <- find_lambda_SSD(mod_leslie_mat, class_names)
+    mod_lambda <- mod_lambda_SSD[[1]]
+    mod_SSD <- mod_lambda_SSD[[2]]
+    
+    # Calculate phosphorus content with modified SSD
+    e_rates <- elem_rates(
+      population_vector = mod_SSD,
       stoichiometry_array = stoichiometry_array,
       element_names = element_names
     )
     
-    # Extract results
-    mod_lambda <- mod_results$lambda
-    mod_percentP <- mod_results$mean_percentP
+    # Extract modified phosphorus percentage
+    mod_percentP <- e_rates[['percent_elem_pop_biomass']][[paste0("percent", element_names[1])]]
     
     # Calculate elasticity
     lambda_elasticity <- (lambda0 - mod_lambda) / lambda0
@@ -254,6 +316,8 @@ calculate_elasticity <- function(param_set, class_names, transition_matrix, feco
     tmp <- data.table(
       sample_id = param_set$iter,
       theta = theta,
+      parameter_type = parameter_type,
+      parameter_name = parameter_name, 
       class_affected = factor(class_names[j], levels = class_names),
       lambda0 = lambda0,
       mod_lambda = mod_lambda,

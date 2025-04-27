@@ -57,26 +57,32 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
   return(p_plot)
 }
 
-#' Create elasticity figure
+#' Create comprehensive elasticity figure
 #'
 #' @description 
-#' This function creates Figure 2 for the manuscript showing 
+#' This function creates Figure 2, S2 and S3 for the manuscript showing 
 #' the sensitivity of population growth rate and phosphorus content
-#' to survival rates.
+#' to survival, fecundity, and growth rates.
 #'
-#' @param elasticity_results Data table with elasticity analysis results
+#' @param elasticity_results Data table with comprehensive elasticity analysis results
 #'
-#' @return A ggplot object for Figure 2
-#' 
-#' @import gglot2 patchwork
-#' @importFrom scales percent trans_new
-#' @importFrom showtext showtext_auto
-#' 
+#' @return A ggplot object for Figure 2, S2 or S3
 #' @export
-create_elasticity_figure <- function(elasticity_results) {
-  # Create subdata
-  lambda_data <- elasticity_results[, .(theta, class_affected, lambda_elasticity)]
-  p_data <- elasticity_results[, .(theta, class_affected, P_elasticity)]
+#' @importFrom scales trans_new label_percent
+create_comprehensive_elasticity_figure <- function(elasticity_results, analysis_type) {
+  # Select data
+  elasticity_results = elasticity_results[parameter_type == analysis_type]
+  
+  # Define a common color palette for all parameter types
+  class_colors <- c(J1 = "#9ACD32", J2 = "#FFD700", A1 = "#8DEEEE", A2 = "#AB82FF", A3 = "#EE6AA7")
+
+  # Axis transformation
+  squeeze_trans <- scales::trans_new(
+    name = "squeeze",
+    transform = function(x) sign(x) * log1p(abs(x)),
+    inverse = function(x) sign(x) * (exp(abs(x)) - 1),
+    domain = c(-Inf, Inf)
+  )
   
   # Create temperature label
   temp_labels <- data.frame(
@@ -84,34 +90,18 @@ create_elasticity_figure <- function(elasticity_results) {
     label = paste0(unique(elasticity_results$theta), "\u00b0C")
   )
   
-  # Palette de couleurs pour les classes
-  class_colors <- c(
-    J1 = "#9ACD32", 
-    J2 = "#FFD700", 
-    A1 = "#8DEEEE", 
-    A2 = "#AB82FF", 
-    A3 = "#EE6AA7"
-  )
-  
-  # Sub-figure A: Sensitivity of asymptotic growth rate (\u03bb)
-  lambda_plot <- ggplot(lambda_data) +
-    
-    # Scale axis
-    scale_x_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0, 1, by = 0.05), labels = scales::percent, expand = c(0.01, 0.01)) +
-    scale_y_continuous(breaks = seq(-20, 20, by = 1), minor_breaks = seq(-20, 20, by = 0.5), expand = c(0.01, 0.01)) +
-    coord_cartesian(xlim = c(0, 1), ylim = c(-10, 0), clip = "on") +
-    
+  # Sub-figure A: Sensitivity of asymptotic growth rate (\u03bb) by parameter type
+  lambda_plot = ggplot(elasticity_results)  +
     # Scale color
     scale_color_manual(values = class_colors, name = "Size Class") +
     
-    # Mapping
-    aes(y = -lambda_elasticity*100, color = class_affected) +
-    
     # Background
     geom_vline(xintercept = c(0.25, 0.50, 0.75), col = "grey75", linewidth = 0.5, linetype = 2) +
+    geom_hline(yintercept = 0, col = "black", linewidth = 0.5) +
     
     # Plot lines
-    stat_ecdf(geom = "step", pad = FALSE, linewidth = 1) +
+    stat_ecdf(aes(y = -lambda_elasticity*100, color = class_affected), 
+              geom = "line", pad = FALSE, linewidth = 1) +
     
     # Temperature labels in bottom-right corner of each facet
     geom_label(data = temp_labels, aes(label = label),
@@ -127,8 +117,10 @@ create_elasticity_figure <- function(elasticity_results) {
     facet_wrap(~ theta, nrow = 1) +
     
     # Labels
-    labs(x = "Cumulative proportion of simulations", 
-         y = "Change in \u03bb (%)") +
+    labs(
+      y = "Change in \u03bb (%)",
+      x = "Cumulative proportion of simulations (%)"
+    ) +
     
     # Theme
     theme_custom() +
@@ -142,23 +134,9 @@ create_elasticity_figure <- function(elasticity_results) {
       axis.text.x = element_blank(),
       axis.ticks.x = element_blank()
     )
-
-  # Sub-figure B: Sensitivity of phosphorus percentage (%P)
-  squeeze_trans <- scales::trans_new(
-    name = "squeeze",
-    transform = function(x) sign(x) * log1p(abs(x)),
-    inverse = function(x) sign(x) * (exp(abs(x)) - 1),
-    domain = c(-Inf, Inf)
-  )
   
-  p_plot <- ggplot(p_data) +
-    
-    # Scale axis
-    scale_x_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0, 1, by = 0.05), labels = scales::percent, expand = c(0.01, 0.01)) +
-    scale_y_continuous(breaks = seq(-20, 20, by = 1), minor_breaks = seq(-20, 20, by = 0.5), expand = c(0.01, 0.01), 
-                       transform = squeeze_trans) +
-    coord_cartesian(xlim = c(0, 1), ylim = c(-4, 4), clip = "on") +
-    
+  # Sub-figure B: Sensitivity of phosphorus percentage (%P) by parameter type
+  p_plot = ggplot(elasticity_results) +
     # Scale color
     scale_color_manual(values = class_colors, name = "Size Class") +
     
@@ -167,7 +145,8 @@ create_elasticity_figure <- function(elasticity_results) {
     
     # Background
     geom_vline(xintercept = c(0.25, 0.50, 0.75), col = "grey75", linewidth = 0.5, linetype = 2) +
-
+    geom_hline(yintercept = 0, col = "black", linewidth = 0.5) +
+    
     # Plot lines
     stat_ecdf(geom = "step", pad = FALSE, linewidth = 1) +
     
@@ -185,7 +164,7 @@ create_elasticity_figure <- function(elasticity_results) {
     facet_wrap(~ theta, nrow = 1) +
     
     # Labels
-    labs(x = "Cumulative proportion of simulations", 
+    labs(x = "Cumulative proportion of simulations (%)", 
          y = "Change in populational P rate (%)"
     ) +
     
@@ -195,16 +174,65 @@ create_elasticity_figure <- function(elasticity_results) {
       aspect.ratio = 1,
       strip.background = element_blank(),
       strip.text = element_blank(),
-      axis.text.x = element_text(angle = 45, hjust = 1),
       legend.position = "bottom",
       plot.margin = margin(t = 0, b = 2, l = 2, r = 2)
     )
-
+  
+  
+  # Scales
+  if (analysis_type == "survival") {
+    lambda_plot = lambda_plot +
+      # Scale axis
+      scale_x_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0, 1, by = 0.05), labels = scales::label_percent(suffix = ""), expand = c(0.01, 0.01)) +
+      scale_y_continuous(breaks = seq(-100, 100, by = 1), minor_breaks = seq(0, 1, by = 0.1), expand = c(0.01, 0.01)) +
+      coord_cartesian(xlim = c(0, 1), ylim = c(-10, 0), clip = "on")
+    
+    p_plot = p_plot +
+      # Scale axis
+      scale_x_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0, 1, by = 0.05), labels = scales::label_percent(suffix = ""), expand = c(0.01, 0.01)) +
+      scale_y_continuous(breaks = seq(-100, 100, by = 1), minor_breaks = seq(-100, 100, by = 0.5), expand = c(0.01, 0.01), 
+                         transform = squeeze_trans) +
+      coord_cartesian(xlim = c(0, 1), ylim = c(-5, 6), clip = "on")
+    
+  } else if (analysis_type == "fecundity") {
+    lambda_plot = lambda_plot +
+      # Scale axis
+      scale_x_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0, 1, by = 0.05), labels = scales::label_percent(suffix = ""), expand = c(0.01, 0.01)) +
+      scale_y_continuous(breaks = seq(-100, 100, by = 0.25), minor_breaks = seq(-100, 100, by = 0.125), expand = c(0.01, 0.01)) +
+      coord_cartesian(xlim = c(0, 1), ylim = c(-2.5, 0), clip = "on")
+    
+    p_plot = p_plot +
+      # Scale axis
+      scale_x_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0, 1, by = 0.05), labels = scales::label_percent(suffix = ""), expand = c(0.01, 0.01)) +
+      scale_y_continuous(breaks = seq(-100, 100, by = 0.025), minor_breaks = seq(-100, 100, by = 0.0125), expand = c(0.01, 0.01), 
+                         transform = squeeze_trans) +
+      coord_cartesian(xlim = c(0, 1), ylim = c(-0.1, 0.15), clip = "on")
+    
+  } else if (analysis_type == "growth") {
+    
+    major_br = c(seq(-50, -10-1e-9, by = 10), seq(-10, -2-1e-9, by = 2), seq(-2, 2-1e-9, by = 0.5), seq(2, 10-1e-9, by = 2), seq(10, 50, by = 10))
+    minor_br = c(seq(-50, -10-1e-9, by = 1), seq(-10, -2-1e-9, by = 0.5), seq(-2, 2-1e-9, by = 0.25), seq(2, 10-1e-9, by = 0.5), seq(2, 50, by = 1))
+    
+    lambda_plot = lambda_plot +
+      # Scale axis
+      scale_x_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0, 1, by = 0.05), labels = scales::label_percent(suffix = ""), expand = c(0.01, 0.01)) +
+      scale_y_continuous(breaks = major_br, minor_breaks = minor_br, expand = c(0.01, 0.01), transform = squeeze_trans) +
+      coord_cartesian(xlim = c(0, 1), ylim = c(-2, 50), clip = "on")
+    
+    p_plot = p_plot +
+      # Scale axis
+      scale_x_continuous(breaks = seq(0, 1, by = 0.1), minor_breaks = seq(0, 1, by = 0.05), labels = scales::label_percent(suffix = ""), expand = c(0.01, 0.01)) +
+      scale_y_continuous(breaks = seq(-100, 100, by = 0.5), minor_breaks = seq(-100, 100, by = 0.25), expand = c(0.01, 0.01), 
+                         transform = squeeze_trans) +
+      coord_cartesian(xlim = c(0, 1), ylim = c(-4, 1), clip = "on")
+    
+  }
+  
   # Use patchwork to assemble the plots
   library(patchwork)
   
   # Assemble the plots
-  final_plot <- lambda_plot / p_plot +
+  final_plot <- (lambda_plot / p_plot) +
     plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')')  +
     # Adjust layout
     plot_layout(
@@ -212,7 +240,7 @@ create_elasticity_figure <- function(elasticity_results) {
       guides = "collect"
     ) &
     theme(legend.position = "bottom")
-
+  
   return(final_plot)
 }
 
@@ -228,6 +256,9 @@ create_elasticity_figure <- function(elasticity_results) {
 #'
 #' @return A ggplot object for Figure 3
 #' @export
+#' @importFrom data.table as.data.table
+#' @importFrom dplyr mutate
+#' @importFrom tidyr pivot_longer
 create_j1_a3_survival_effect <- function(figure_data, ref_points) {
   # Create subdata
   figure_subdata = figure_data[, .(theta, class_var, J1 = surv_rate_J1, A3 = surv_rate_A3, lambda, mean_percentP)] |> 
@@ -317,11 +348,11 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
 #'
 #' @return A ggplot object for Figure 4
 #' 
+#' @export
 #' @importFrom data.table as.data.table
 #' @importFrom dplyr mutate
+#' @importFrom tagger tag_facets
 #' @importFrom tidyr pivot_longer expand_grid
-#' 
-#' @export
 create_survival_gradient_effect <- function(multi_param_results, monthly_results) {
   # Create subdata
   simulations_data = multi_param_results[, .(theta, J1 = surv_rate_J1, A3 = surv_rate_A3, lambda, mean_percentP)] |> 

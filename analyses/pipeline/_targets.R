@@ -429,98 +429,113 @@ tar_plan(
   # Sample parameters for elasticity analysis
   tar_target(
     elasticity_samples,
-    sample_elasticity_parameters(multi_param_results, n_samples = 10000),
+    sample_elasticity_parameters(multi_param_results, n_samples = nrow(multi_param_results)), # can be change to less samples if needed
     description = "Sampled parameter sets for elasticity analysis"
   ),
   
-  # Run all elasticity calculations in a single target
+  # Sample parameters for elasticity analysis (using samples)
   tar_target(
-    elasticity_results,
+    comprehensive_elasticity_results,
     {
-      # Process data in batches to efficiently manage memory
-      n_rows <- nrow(elasticity_samples)
-      batch_size <- 500
-      n_batches <- ceiling(n_rows / batch_size)
+      # Initialize results list
+      all_results <- list()
       
-      # Initialize list to store results
-      all_results <- vector("list", n_batches)
+      # List of parameter types to analyze
+      param_types <- c("survival", "fecundity", "growth")
       
-      # Process each batch
-      for (batch_idx in 1:n_batches) {
-        # Define start and end indices for this batch
-        start_idx <- (batch_idx - 1) * batch_size + 1
-        end_idx <- min(batch_idx * batch_size, n_rows)
+      for (param_type in param_types) {
+        cat("\nCalculating elasticity for parameter type:", param_type, "\n")
         
-        # Process each row in the current batch
-        batch_results <- lapply(start_idx:end_idx, function(i) {
-          # Extract sample
-          param_set <- elasticity_samples[i, ]
-          
-          # Get temperature
-          theta <- param_set$theta
-          
-          # Get appropriate matrices for this temperature
-          transition_matrix <- extract_matrix_for_temp(
-            matrix_data = trans_mat_by_temp, 
-            temps = base_params$Theta_vec, 
-            current_temp = theta
-          )
-          
-          fecondity_matrix <- extract_matrix_for_temp(
-            matrix_data = feco_mat_by_temp, 
-            temps = base_params$Theta_vec, 
-            current_temp = theta
-          )
-          
-          # Calculate elasticity
-          calculate_elasticity(
-            param_set = param_set,
-            class_names = base_params$names_class,
-            transition_matrix = transition_matrix,
-            fecondity_matrix = fecondity_matrix,
-            stoichiometry_array = mat_sto,
-            element_names = base_params$element_names
-          )
-        })
+        # Process data in batches to efficiently manage memory
+        n_rows <- nrow(elasticity_samples)
+        batch_size <- 500
+        n_batches <- ceiling(n_rows / batch_size)
         
-        # Combine results from this batch
-        all_results[[batch_idx]] <- rbindlist(batch_results)
+        # Initialize list to store results
+        type_results <- vector("list", n_batches)
         
-        # Display progress
-        cat("Elasticity: Completed batch", batch_idx, "of", n_batches, "\n")
+        # Process each batch
+        for (batch_idx in 1:n_batches) {
+          # Define start and end indices for this batch
+          start_idx <- (batch_idx - 1) * batch_size + 1
+          end_idx <- min(batch_idx * batch_size, n_rows)
+          
+          # Process each row in the current batch
+          batch_results <- lapply(start_idx:end_idx, function(i) {
+            # Extract sample
+            param_set <- elasticity_samples[i, ]
+            
+            # Get temperature
+            theta <- param_set$theta
+            
+            # Get appropriate matrices for this temperature
+            transition_matrix <- extract_matrix_for_temp(
+              matrix_data = trans_mat_by_temp, 
+              temps = base_params$Theta_vec, 
+              current_temp = theta
+            )
+            
+            fecondity_matrix <- extract_matrix_for_temp(
+              matrix_data = feco_mat_by_temp, 
+              temps = base_params$Theta_vec, 
+              current_temp = theta
+            )
+            
+            # Calculate elasticity for the current parameter type
+            calculate_comprehensive_elasticity(
+              param_set = param_set,
+              class_names = base_params$names_class,
+              transition_matrix = transition_matrix,
+              fecondity_matrix = fecondity_matrix,
+              stoichiometry_array = mat_sto,
+              element_names = base_params$element_names,
+              parameter_type = param_type
+            )
+          })
+          
+          # Combine results from this batch
+          type_results[[batch_idx]] <- rbindlist(batch_results)
+          
+          # Display progress
+          cat("Elasticity for", param_type, ": Completed batch", batch_idx, "of", n_batches, "\n")
+        }
+        
+        # Combine all batches for this parameter type
+        all_results[[param_type]] <- rbindlist(type_results)
       }
       
-      # Combine all results
+      # Combine all parameter types
       final_results <- rbindlist(all_results)
+      final_results[, parameter_type := factor(parameter_type, levels = param_types)]
       
       return(final_results)
     },
-    description = "Complete elasticity analysis results"
+    description = "Complete elasticity analysis for survival, fecundity, and growth parameters"
   ),
   
-  # Calculate summary statistics for elasticity results
+  # Calculate summary statistics for comprehensive elasticity results
   tar_target(
-    elasticity_summary,
-    elasticity_results[, .(
+    comprehensive_elasticity_summary,
+    comprehensive_elasticity_results[, .(
       mean_lambda_elasticity = mean(lambda_elasticity),
       sd_lambda_elasticity = sd(lambda_elasticity),
       mean_P_elasticity = mean(P_elasticity),
       sd_P_elasticity = sd(P_elasticity)
-    ), by = .(theta, class_affected)],
-    description = "Summary statistics of elasticity analysis by temperature and size class"
+    ), by = .(theta, parameter_type, parameter_name, class_affected)],
+    description = "Summary statistics of comprehensive elasticity analysis"
   ),
   
-  # Save elasticity results
+  # Save comprehensive elasticity results
   tar_target(
-    elasticity_results_save_path,
+    comprehensive_elasticity_results_save_path,
     {
-      file_path = file.path(sim_output_dir, "elasticity_results.csv")
-      fwrite(elasticity_results, 
+      file_path = file.path(sim_output_dir, "comprehensive_elasticity_results.csv")
+      fwrite(comprehensive_elasticity_results, 
              file = file_path, 
              sep = ";", dec = ",")
       return(file_path)
     },
-    description = "Save results of elasticity analysis"
+    description = "Save results of comprehensive elasticity analysis"
   ),
 
   # ______________________________________________________________________________
@@ -683,7 +698,7 @@ tar_plan(
     figure_2,
     {
       load_fonts
-      create_elasticity_figure(elasticity_results)
+      create_comprehensive_elasticity_figure(comprehensive_elasticity_results, analysis_type = "survival")
     },
     description = "Figure 2: Sensitivity of population growth rate and phosphorus content to survival rates"
   ),
@@ -733,6 +748,31 @@ tar_plan(
   ),
   
   # ______________________________________________________________________________
+  # Supplementary figures ----
+  # ______________________________________________________________________________
+  
+  # Elasticities on fecundity and growth parameters
+  # Create Figure S2
+  tar_target(
+    figure_S2,
+    {
+      load_fonts
+      create_comprehensive_elasticity_figure(comprehensive_elasticity_results, analysis_type = "fecundity")
+    },
+    description = "Figure S2: Sensitivity of population growth rate and phosphorus content to fecundity rates"
+  ),
+  
+  # Create Figure S3
+  tar_target(
+    figure_S3,
+    {
+      load_fonts
+      create_comprehensive_elasticity_figure(comprehensive_elasticity_results, analysis_type = "growth")
+    },
+    description = "Figure S3: Sensitivity of population growth rate and phosphorus content to transition rates"
+  ),
+  
+  # ______________________________________________________________________________
   # Save figures ----
   # ______________________________________________________________________________
   
@@ -756,12 +796,12 @@ tar_plan(
     save_figure_2,
     save_figure(
       plot = figure_2,
-      basename = "figure_2_elasticity_analysis",
+      basename = "figure_2_elasticity_analysis_survival",
       dir = fig_output_dir,
-      width = 1744,
-      height = 1280,
+      width = 2400,
+      height = 2000,
       units = "px",
-      dpi = 200
+      dpi = 300
     ),
     description = "Saved Figure 2 in multiple formats"
   ),
@@ -794,5 +834,35 @@ tar_plan(
       dpi = 200
     ),
     description = "Saved Figure 4 in multiple formats"
+  ),
+  
+  # Save Figure S2
+  tar_target(
+    save_figure_S2,
+    save_figure(
+      plot = figure_S2,
+      basename = "figure_S2_elasticity_analysis_fecundity",
+      dir = fig_output_dir,
+      width = 2400,
+      height = 2000,
+      units = "px",
+      dpi = 300
+    ),
+    description = "Saved Figure S2 in multiple formats"
+  ),
+  
+  # Save Figure S3
+  tar_target(
+    save_figure_S3,
+    save_figure(
+      plot = figure_S3,
+      basename = "figure_S3_elasticity_analysis_growth",
+      dir = fig_output_dir,
+      width = 2400,
+      height = 2000,
+      units = "px",
+      dpi = 300
+    ),
+    description = "Saved Figure S3 in multiple formats"
   )
 )
