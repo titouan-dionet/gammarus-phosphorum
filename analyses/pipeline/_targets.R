@@ -1022,7 +1022,7 @@ tar_plan(
       basename = "figure_2_elasticity_analysis_survival",
       dir = fig_output_dir,
       width = 2400,
-      height = 2000,
+      height = 1800,
       units = "px",
       dpi = 300
     ),

@@ -140,7 +140,8 @@ create_comprehensive_elasticity_figure <- function(elasticity_results, analysis_
       plot.margin = margin(t = 2, b = 0, l = 2, r = 2),
       axis.title.x = element_blank(),
       axis.text.x = element_blank(),
-      axis.ticks.x = element_blank()
+      axis.ticks.x = element_blank(),
+      axis.ticks.length.x = unit(0, "cm")
     )
   
   # Sub-figure B: Sensitivity of phosphorus percentage (%P) by parameter type
@@ -183,7 +184,8 @@ create_comprehensive_elasticity_figure <- function(elasticity_results, analysis_
       strip.background = element_blank(),
       strip.text = element_blank(),
       legend.position = "bottom",
-      plot.margin = margin(t = 0, b = 2, l = 2, r = 2)
+      plot.margin = margin(t = 0, b = 2, l = 2, r = 2),
+      axis.ticks.length.x.top = unit(0, "cm")
     )
   
   
@@ -237,11 +239,16 @@ create_comprehensive_elasticity_figure <- function(elasticity_results, analysis_
   }
   
   # Assemble the plots
+  layout = c(
+    patchwork::area(t = 1, l = 1, b = 5, r = 2),
+    patchwork::area(t = 6, l = 1, b = 10, r = 2)
+  )
   final_plot <- (lambda_plot / p_plot) +
     patchwork::plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')')  +
     # Adjust layout
     patchwork::plot_layout(
-      heights = c(1, 1),    # Equal height for both plots
+      # heights = c(1, 1),    # Equal height for both plots
+      design = layout,
       guides = "collect"
     ) &
     theme(legend.position = "bottom")
