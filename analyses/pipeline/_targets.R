@@ -101,12 +101,23 @@ tar_plan(
     description = "Processed phosphorus data with concentrations and percentages calculated"
   ),
   
+  # Note: In one replicate in the J1 class, the %P value is far lower than 
+  # other values from the same class, probably due to handling or measurement 
+  # error. Thus, the authors decided to remove this point from further analysis.
+  
+  # Remove outlier point from further analysis
+  tar_target(
+    clean_processed_phosphorus_data,
+    processed_phosphorus_data[id != "G-J1-3"],
+    description = "Remove outlier point from further analysis"
+  ),
+  
   # Statistical analysis
   tar_target(
     phosphorus_stats,
-    auto_test_groups(processed_phosphorus_data, 
-                     processed_phosphorus_data$P_percent, 
-                     processed_phosphorus_data$class, 
+    auto_test_groups(clean_processed_phosphorus_data, 
+                     clean_processed_phosphorus_data$P_percent, 
+                     clean_processed_phosphorus_data$class, 
                      detailed = TRUE),
     description = "Statistical analysis of idividual phosphorus differences between size classes"
   ),
@@ -151,7 +162,7 @@ tar_plan(
     mat_sto,
     {
       # First, create a modified class variable that combines neo-J1 and J1
-      phosphorus_data_with_combined_j1 <- copy(processed_phosphorus_data)
+      phosphorus_data_with_combined_j1 <- copy(clean_processed_phosphorus_data)
       phosphorus_data_with_combined_j1[, combined_class := ifelse(grepl("neo-J1|^J1$", class), "J1", as.character(class))]
       
       # Calculate average biomass and phosphorus percentage by size class
@@ -823,7 +834,7 @@ tar_plan(
     figure_1,
     {
       load_fonts
-      create_phosphorus_figure(processed_phosphorus_data, phosphorus_stats$info)
+      create_phosphorus_figure(clean_processed_phosphorus_data, phosphorus_stats$info)
     },
     description = "Figure 1: Phosphorus content across different size classes"
   ),

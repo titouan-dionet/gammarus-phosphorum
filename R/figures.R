@@ -34,13 +34,13 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
     aes(x = class, y = P_percent*100, col = class) +
     
     # Points with outlier highlighted
-    geom_point(aes(shape = ifelse(class == "J1" & P_percent == min(phosphorus_data[class == "J1", P_percent]), 
-                                  "outlier", "normal")), 
-               size = 1.5) +
-    scale_shape_manual(values = c(outlier = 1, normal = 16), guide = "none") +
+    geom_point(shape = 16, size = 1.5) +
     
     # Mean marker (star symbol)
     stat_summary(fun = "mean", col = "red", size = 2, shape = 13, geom = "point") +
+    geom_errorbar(data = stats_info,
+                  aes(x = as.factor(trt), y = NULL, ymin = (mean - se)*100, ymax = (mean + se)*100),
+                  col = "red", linewidth = 0.5, width = 0.2) +
     
     # Significance letters
     geom_text(data = stats_info, 
