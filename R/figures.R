@@ -55,7 +55,7 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
     
     # Labels
     labs(x = "Size class", 
-         y = "Individual P rate (%)") +
+         y = "Individual P content (%)") +
     
     # Theme
     theme_custom()
@@ -174,7 +174,7 @@ create_comprehensive_elasticity_figure <- function(elasticity_results, analysis_
     
     # Labels
     labs(x = "Cumulative proportion of simulations (%)", 
-         y = "Change in populational P rate (%)"
+         y = "Change in populational P content (%)"
     ) +
     
     # Theme
@@ -331,7 +331,7 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
     # Labels
     labs(
       x = "Asymptotic Growth Rate (\u03bb)",
-      y = "Populational P rate (%)"
+      y = "Populational P content (%)"
     ) +
     
     # Facets
@@ -431,7 +431,7 @@ create_survival_gradient_effect <- function(multi_param_results, monthly_results
     # Labels
     labs(
       x = "Asymptotic Growth Rate (\u03bb)",
-      y = "Populational P rate (%)"
+      y = "Populational P content (%)"
     ) +
     
     # Facets
@@ -699,7 +699,7 @@ create_model_parameter_elasticity_figure <- function(elasticity_results) {
       
       # Labels
       labs(x = "Cumulative proportion of simulations (%)", 
-           y = "Change in populational P rate (%)"
+           y = "Change in populational P content (%)"
       ) +
       
       # Theme

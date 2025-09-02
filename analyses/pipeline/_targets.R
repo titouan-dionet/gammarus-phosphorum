@@ -1081,7 +1081,7 @@ tar_plan(
       basename = "figure_S2_elasticity_analysis_fecundity",
       dir = fig_output_dir,
       width = 2400,
-      height = 2000,
+      height = 1800,
       units = "px",
       dpi = 300
     ),
@@ -1096,7 +1096,7 @@ tar_plan(
       basename = "figure_S3_elasticity_analysis_growth",
       dir = fig_output_dir,
       width = 2400,
-      height = 2000,
+      height = 1800,
       units = "px",
       dpi = 300
     ),
@@ -1114,7 +1114,7 @@ tar_plan(
           basename = paste0("figure_S4_model_parameter_elasticity_", names(figure_S4[sub_fig])),
           dir = fig_output_dir,
           width = 2400,
-          height = 2000,
+          height = 1800,
           units = "px",
           dpi = 300
         )
