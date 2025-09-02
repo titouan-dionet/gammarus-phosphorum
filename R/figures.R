@@ -29,18 +29,24 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
     scale_color_manual(values = c(J1 = "#9ACD32", J2 = "#FFD700", A1 = "#8DEEEE", 
                                   A2 = "#AB82FF", A3 = "#EE6AA7", `neo-J1` = "#759837"),
                        name = "class", guide = "none") +
+    scale_fill_manual(values = c(J1 = "#9ACD32", J2 = "#FFD700", A1 = "#8DEEEE", 
+                                  A2 = "#AB82FF", A3 = "#EE6AA7", `neo-J1` = "#759837"),
+                       name = "class", guide = "none") +
     
     # Data mapping
     aes(x = class, y = P_percent*100, col = class) +
     
     # Points with outlier highlighted
-    geom_point(shape = 16, size = 1.5) +
+    geom_jitter(aes(fill = class), shape = 21, size = 1, alpha = 0.4, width = 0.05) +
     
     # Mean marker (star symbol)
-    stat_summary(fun = "mean", col = "red", size = 2, shape = 13, geom = "point") +
+    # stat_summary(fun = "mean", col = "red", size = 2, shape = 13, geom = "point") +
+    geom_point(data = stats_info,
+               aes(x = as.factor(trt), y = mean*100, col = trt), shape = 13, size = 2) +
     geom_errorbar(data = stats_info,
-                  aes(x = as.factor(trt), y = NULL, ymin = (mean - se)*100, ymax = (mean + se)*100),
-                  col = "red", linewidth = 0.5, width = 0.2) +
+                  aes(x = as.factor(trt), y = NULL, ymin = (mean - se)*100, ymax = (mean + se)*100,
+                      col = trt),
+                  linewidth = 0.5, width = 0.2) +
     
     # Significance letters
     geom_text(data = stats_info, 
