@@ -122,6 +122,23 @@ tar_plan(
     description = "Statistical analysis of idividual phosphorus differences between size classes"
   ),
   
+  # Statistical analysis between J1 and others
+  tar_target(
+    phosphorus_stats_J1_vs_Others,
+    {
+      # Create a modified class variable that combines neo-J1 and J1, and separate it from others
+      phosphorus_data_with_combined_j1 <- copy(clean_processed_phosphorus_data)
+      phosphorus_data_with_combined_j1[, combined_class := ifelse(grepl("neo-J1|^J1$", class), "J1", "Others")]
+      
+      # Statistical analysis
+      auto_test_groups(phosphorus_data_with_combined_j1, 
+                       phosphorus_data_with_combined_j1$P_percent, 
+                       phosphorus_data_with_combined_j1$combined_class, 
+                       detailed = TRUE)
+    },
+    description = "Statistical analysis of idividual phosphorus differences between J1 and others"
+  ),
+  
   # ______________________________________________________________________________
   # Simulation configuration ----
   # ______________________________________________________________________________
