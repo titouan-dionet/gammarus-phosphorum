@@ -1,25 +1,25 @@
 #' Gammarus-Phosphorum Pipeline Execution
-#' 
+#'
 #' @title Execute the Gammarus-Phosphorum analysis pipeline
-#' 
-#' @description 
-#' This script serves as the main entry point for running the Gammarus-Phosphorum 
+#'
+#' @description
+#' This script serves as the main entry point for running the Gammarus-Phosphorum
 #' project pipeline. It executes the following steps:
 #' 1. Restores dependencies using renv
 #' 2. Sets the targets configuration
 #' 3. Visualizes the pipeline structure (pre-execution) and saves it
 #' 4. Executes the pipeline using targets
-#' 
-#' The pipeline analyzes phosphorus stoichiometry and population dynamics in 
+#'
+#' The pipeline analyzes phosphorus stoichiometry and population dynamics in
 #' Gammarus fossarum to test the Growth Rate Hypothesis at the population level.
-#' 
+#'
 #' @author Titouan Dionet \email{titouan.dionet@univ-lorraine.fr}
-#' 
+#'
 #' @date 2025/04/15
 #'
 #' @usage
 #' source("make.R")  # Run the entire pipeline
-#' 
+#'
 
 # ---- Setup ----
 # Print header
@@ -72,7 +72,10 @@ if (!dir.exists(doc_dir)) {
 
 # ---- Pre-Execution Visualization ----
 cat("Generating and saving pipeline visualization (pre-execution)...\n")
-pre_viz <- try(targets::tar_visnetwork(targets_only = TRUE, callr_function = NULL), silent = TRUE)
+pre_viz <- try(
+  targets::tar_visnetwork(targets_only = TRUE, callr_function = NULL),
+  silent = TRUE
+)
 
 if (inherits(pre_viz, "try-error")) {
   cat("Error generating pre-execution visualization.\n")
@@ -83,12 +86,12 @@ if (inherits(pre_viz, "try-error")) {
   if (!dir.exists(doc_dir)) {
     dir.create(doc_dir, recursive = TRUE)
   }
-  
+
   # Save as HTML
   html_file <- file.path(doc_dir, "pipeline_pre_execution.html")
   htmlwidgets::saveWidget(pre_viz, html_file, selfcontained = TRUE)
   cat("Pre-execution visualization saved to:", html_file, "\n")
-  
+
   # If in an interactive session, display the visualization
   if (interactive()) {
     show(pre_viz)
@@ -118,7 +121,10 @@ cat("Execution time:", round(as.numeric(execution_time), 2), "minutes\n")
 
 # ---- Post-Execution Visualization ----
 cat("\nGenerating and saving pipeline visualization (post-execution)...\n")
-post_viz <- try(targets::tar_visnetwork(targets_only = TRUE, callr_function = NULL), silent = TRUE)
+post_viz <- try(
+  targets::tar_visnetwork(targets_only = TRUE, callr_function = NULL),
+  silent = TRUE
+)
 if (inherits(post_viz, "try-error")) {
   cat("Error generating post-execution visualization.\n")
   cat("Error details:", attr(post_viz, "condition")$message, "\n")
@@ -127,7 +133,7 @@ if (inherits(post_viz, "try-error")) {
   html_file <- file.path(doc_dir, "pipeline_post_execution.html")
   htmlwidgets::saveWidget(post_viz, html_file, selfcontained = TRUE)
   cat("Post-execution visualization saved to:", html_file, "\n")
-  
+
   # If in an interactive session, display the visualization
   if (interactive()) {
     print(post_viz)
@@ -162,7 +168,9 @@ cat("========================================================\n")
 # ---- Interactive Mode (if running in an interactive session) ----
 if (interactive()) {
   cat("\nInteractive Mode:\n")
-  cat("1. To view the pipeline manifest interactively: targets::tar_manifest()\n")
+  cat(
+    "1. To view the pipeline manifest interactively: targets::tar_manifest()\n"
+  )
   cat("2. To visualize the pipeline graph: targets::tar_visnetwork()\n")
   cat("3. To view target metadata: targets::tar_meta()\n")
   cat("4. To load a specific target: targets::tar_load(target_name)\n")
