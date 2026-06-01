@@ -119,8 +119,14 @@ tar_plan(
 
   # Process phosphorus data
   tar_target(
+    phosphorus_class_data,
+    convert_class_to_factor(raw_phosphorus_data),
+    description = "Phosphorus data with size classes converted to ordered factor"
+  ),
+
+  tar_target(
     processed_phosphorus_data,
-    process_phosphorus_data(raw_phosphorus_data, calibration_coefficient$coef),
+    calculate_phosphorus(phosphorus_class_data, calibration_coefficient$coef),
     description = "Processed phosphorus data with concentrations and percentages calculated"
   ),
 
@@ -144,7 +150,7 @@ tar_plan(
       clean_processed_phosphorus_data$class,
       detailed = TRUE
     ),
-    description = "Statistical analysis of idividual phosphorus differences between size classes"
+    description = "Statistical analysis of individual phosphorus differences between size classes"
   ),
 
   # Statistical analysis between J1 and others
@@ -995,7 +1001,81 @@ tar_plan(
   # ______________________________________________________________________________
 
   # ______________________________________________________________________________
-  # Figure S1: Temperature-dependent transition rates visualization ----
+  # Figure S1: Phosphorus sex difference analysis ----
+  # ______________________________________________________________________________
+
+  # Load calibration data
+  tar_target(
+    calibration_sup_data,
+    fread(
+      here::here("data", "raw_data", "P_conc_range_2023_04.csv"),
+      sep = ";",
+      dec = ",",
+      header = TRUE
+    ),
+    description = "Phosphorus calibration curve data from April 2023"
+  ),
+
+  # Calibration coefficient
+  tar_target(
+    calibration_coefficient_sup,
+    cal_coef(calibration_sup_data),
+    description = "Calibration coefficient derived from standard curve of April 2023"
+  ),
+
+  # Load raw phosphorus data
+  tar_target(
+    raw_phosphorus_sup_data,
+    fread(
+      here::here(
+        "data",
+        "raw_data",
+        "phosphorus_measurements_individual_2023_04.csv"
+      ),
+      sep = ";",
+      dec = ",",
+      header = TRUE
+    ),
+    description = "Raw phosphorus measurement data from April 2023"
+  ),
+
+  # Process phosphorus data
+  tar_target(
+    processed_phosphorus_sup_data,
+    calculate_phosphorus(
+      raw_phosphorus_sup_data,
+      calibration_coefficient_sup$coef
+    ),
+    description = "Processed phosphorus data with concentrations and percentages calculated"
+  ),
+
+  # Statistical analysis
+  tar_target(
+    phosphorus_stats_sup,
+    auto_test_groups(
+      processed_phosphorus_sup_data[sex != "J"],
+      processed_phosphorus_sup_data[sex != "J"]$P_percent,
+      processed_phosphorus_sup_data[sex != "J"]$sex,
+      detailed = TRUE
+    ),
+    description = "Statistical analysis of individual phosphorus differences between adults"
+  ),
+
+  # Create Figure S1
+  tar_target(
+    figure_S1,
+    {
+      load_fonts
+      create_phosphorus_sex_difference_figure(
+        processed_phosphorus_sup_data[sex != "J"],
+        phosphorus_stats_sup$info
+      )
+    },
+    description = "Figure S1: Phosphorus content across sex"
+  ),
+
+  # ______________________________________________________________________________
+  # Figure S2: Temperature-dependent transition rates visualization ----
   # ______________________________________________________________________________
 
   # Generate temperature range for transition rates
@@ -1020,7 +1100,7 @@ tar_plan(
 
   # Create transition rates plot
   tar_target(
-    transition_rates_plot,
+    figure_S2,
     {
       load_fonts
       create_transition_rates_plot(
@@ -1031,25 +1111,12 @@ tar_plan(
         delta_t = base_params$delta_t
       )
     },
-    description = "Plot showing transition rates between size classes as a function of temperature"
+    description = "Figure S2: Plot showing transition rates between size classes as a function of temperature"
   ),
 
   # ______________________________________________________________________________
-  # Figures S2 and S3: Elasticities on fecundity and growth parameters ----
+  # Figures S3 and S4: Elasticities on fecundity and growth parameters ----
   # ______________________________________________________________________________
-  # Create Figure S2
-  tar_target(
-    figure_S2,
-    {
-      load_fonts
-      create_elasticity_figure(
-        elasticity_results,
-        analysis_type = "fecundity"
-      )
-    },
-    description = "Figure S2: Sensitivity of population growth rate and phosphorus content to fecundity rates"
-  ),
-
   # Create Figure S3
   tar_target(
     figure_S3,
@@ -1057,26 +1124,39 @@ tar_plan(
       load_fonts
       create_elasticity_figure(
         elasticity_results,
+        analysis_type = "fecundity"
+      )
+    },
+    description = "Figure S3: Sensitivity of population growth rate and phosphorus content to fecundity rates"
+  ),
+
+  # Create Figure S4
+  tar_target(
+    figure_S4,
+    {
+      load_fonts
+      create_elasticity_figure(
+        elasticity_results,
         analysis_type = "growth"
       )
     },
-    description = "Figure S3: Sensitivity of population growth rate and phosphorus content to transition rates"
+    description = "Figure S4: Sensitivity of population growth rate and phosphorus content to transition rates"
   ),
 
   # ______________________________________________________________________________
-  # Figures S4: Model Parameter Elasticity Analysis ----
+  # Figures S5: Model Parameter Elasticity Analysis ----
   # ______________________________________________________________________________
 
-  # Create Figures S4
+  # Create Figures S5
   tar_target(
-    figure_S4,
+    figure_S5,
     {
       load_fonts
       create_model_parameter_elasticity_figure(
         model_parameter_elasticity_results
       )
     },
-    description = "Figure S4: Sensitivity analysis of underlying model parameters"
+    description = "Figure S5: Sensitivity analysis of underlying model parameters"
   ),
 
   # ______________________________________________________________________________
@@ -1135,8 +1215,8 @@ tar_plan(
       plot = figure_4,
       basename = "figure_4_survival_gradient_effect",
       dir = fig_output_dir,
-      width = 1744,
-      height = 1280,
+      width = 2000,
+      height = 1750,
       units = "px",
       dpi = 200
     ),
@@ -1145,27 +1225,28 @@ tar_plan(
 
   # Save Figure S1
   tar_target(
-    save_transition_rates_plot,
+    save_figure_S1,
     save_figure(
-      plot = transition_rates_plot,
-      basename = "figure_S1_temperature_transition_rates",
+      plot = figure_S1,
+      basename = "figure_S1_phosphorus_by_sex",
       dir = fig_output_dir,
-      width = 2048,
-      height = 2048,
+      width = 720,
+      height = 720,
       units = "px",
-      dpi = 300
+      dpi = 200
     ),
     description = "Saved Figure S1 in multiple formats"
   ),
+
   # Save Figure S2
   tar_target(
     save_figure_S2,
     save_figure(
       plot = figure_S2,
-      basename = "figure_S2_elasticity_analysis_fecundity",
+      basename = "figure_S2_temperature_transition_rates",
       dir = fig_output_dir,
-      width = 2400,
-      height = 1800,
+      width = 2048,
+      height = 2048,
       units = "px",
       dpi = 300
     ),
@@ -1177,7 +1258,7 @@ tar_plan(
     save_figure_S3,
     save_figure(
       plot = figure_S3,
-      basename = "figure_S3_elasticity_analysis_growth",
+      basename = "figure_S3_elasticity_analysis_fecundity",
       dir = fig_output_dir,
       width = 2400,
       height = 1800,
@@ -1187,17 +1268,32 @@ tar_plan(
     description = "Saved Figure S3 in multiple formats"
   ),
 
-  # Save Figures S4
+  # Save Figure S4
   tar_target(
     save_figure_S4,
+    save_figure(
+      plot = figure_S4,
+      basename = "figure_S4_elasticity_analysis_growth",
+      dir = fig_output_dir,
+      width = 2400,
+      height = 1800,
+      units = "px",
+      dpi = 300
+    ),
+    description = "Saved Figure S4 in multiple formats"
+  ),
+
+  # Save Figures S5
+  tar_target(
+    save_figure_S5,
     {
-      names_figures = names(figure_S4)
+      names_figures = names(figure_S5)
       for (sub_fig in 1:length(names_figures)) {
         save_figure(
-          plot = figure_S4[[sub_fig]],
+          plot = figure_S5[[sub_fig]],
           basename = paste0(
-            "figure_S4_model_parameter_elasticity_",
-            names(figure_S4[sub_fig])
+            "figure_S5_model_parameter_elasticity_",
+            names(figure_S5[sub_fig])
           ),
           dir = fig_output_dir,
           width = 2400,
@@ -1207,6 +1303,6 @@ tar_plan(
         )
       }
     },
-    description = "Saved Figures S4 in multiple formats"
+    description = "Saved Figures S5 in multiple formats"
   )
 )
