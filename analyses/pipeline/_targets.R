@@ -9,7 +9,7 @@
 library(targets)
 library(tarchetypes)
 
-future::plan(future::multisession, workers = 6)
+# future::plan(future::multisession, workers = 6)
 
 # Set pipeline options
 tar_option_set(
@@ -974,23 +974,12 @@ tar_plan(
     description = "Filtered data for Figure 4 showing the effect of J1 and A3 survival"
   ),
 
-  # Calculate reference points for Figure 4
-  tar_target(
-    figure_4_reference_points,
-    annual_simulations[, .(
-      lambda = lambda,
-      mean_percentP = mean_percentP,
-      theta = theta
-    )],
-    description = "Annual reference points for population growth and phosphorus content"
-  ),
-
   # Create Figure 4
   tar_target(
     figure_4,
     {
       load_fonts
-      create_j1_a3_survival_effect(figure_4_data, figure_4_reference_points)
+      create_j1_a3_survival_effect(figure_4_data)
     },
     description = "Figure 4: Effect of J1 and A3 survival on growth rate and phosphorus relationship"
   ),
@@ -1262,7 +1251,7 @@ tar_plan(
       basename = "figure_4_j1_a3_survival_effect",
       dir = fig_output_dir,
       width = 1024,
-      height = 550,
+      height = 720,
       units = "px",
       dpi = 200
     ),

@@ -673,24 +673,27 @@ create_elasticity_figure <- function(elasticity_results, analysis_type) {
 #' Create J1 and A3 survival effect figure
 #'
 #' @description
-#' This function creates Figure 4 for the manuscript showing
-#' the effect of J1 and A3 survival on the relationship between
-#' asymptotic growth rate and phosphorus content.
+#' Creates Figure 4 for the manuscript, displaying the relationship between
+#' the asymptotic growth rate (lambda) and mean population phosphorus content
+#' (%P) when varying the survival rate of the J1 (top row) or A3 (bottom row)
+#' size class across its full range, at three temperatures (8, 12, and 16 C).
+#' All other class-specific survival rates are held constant at their empirical
+#' monthly average values. These two classes were selected based on their
+#' dominant contribution to lambda sensitivity (Fig. 3).
 #'
-#' @param figure_data Data filtered for J1 and A3 classes
-#' @param ref_points Reference points from annual simulation
+#' @param figure_data Data table containing single-parameter simulation results
+#'   for J1 and A3 survival variations, with columns \code{theta},
+#'   \code{class_var}, \code{surv_rate_J1}, \code{surv_rate_A3},
+#'   \code{lambda}, and \code{mean_percentP}
 #'
-#' @return A ggplot object for Figure 4
+#' @return A ggplot object representing Figure 4
 #' @export
 #' @importFrom data.table as.data.table
 #' @importFrom dplyr mutate
 #' @importFrom tidyr pivot_longer
-#' @importFrom data.table as.data.table
-#' @importFrom dplyr mutate
-#' @importFrom tidyr pivot_longer
-create_j1_a3_survival_effect <- function(figure_data, ref_points) {
-  # Create subdata
-  figure_subdata = figure_data[, .(
+create_j1_a3_survival_effect <- function(figure_data) {
+  # Prepare data
+  figure_subdata <- figure_data[, .(
     theta,
     class_var,
     J1 = surv_rate_J1,
@@ -710,14 +713,24 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
     ) |>
     data.table::as.data.table()
 
-  # Create temperature label
-  temp_labels <- data.frame(
-    theta = unique(figure_subdata$theta),
-    label = paste0(unique(figure_subdata$theta), "\u00b0C")
-  )
+  # Temperature labels per facet (class_var x theta combination)
+  temp_labels <- tidyr::expand_grid(
+    class_var = unique(figure_subdata$class_var),
+    theta = unique(figure_subdata$theta)
+  ) |>
+    dplyr::mutate(label = paste0(theta, "\u00b0C"))
+
+  # Class labels for row annotation (left side of first column)
+  class_labels <- data.frame(
+    class_var = unique(figure_subdata$class_var),
+    theta = min(as.numeric(as.character(unique(figure_subdata$theta)))),
+    label = paste0(unique(figure_subdata$class_var), " class")
+  ) |>
+    dplyr::mutate(theta = as.factor(theta))
 
   # Create figure
-  fig_3 <- ggplot() +
+  fig_4 <- ggplot() +
+
     # Scales
     scale_x_continuous(
       breaks = seq(0, 5, by = 0.2),
@@ -735,16 +748,22 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
       clip = "on"
     ) +
 
-    # Style
+    # Color per class
     scale_color_manual(
       values = c(J1 = "#9ACD32", A3 = "#EE6AA7"),
-      name = "Size Class"
+      name = "Size class",
+      guide = "none"
     ) +
 
-    # Background line for \u03bb = 1
-    geom_vline(xintercept = 1, linewidth = 0.5, col = "darkgrey") +
+    # Reference line at lambda = 1
+    geom_vline(
+      xintercept = 1,
+      linewidth = 0.5,
+      col = "darkgrey",
+      linetype = "dashed"
+    ) +
 
-    # Lines for survival variations
+    # Survival variation curves
     geom_line(
       data = figure_subdata,
       aes(x = lambda, y = mean_percentP * 100, color = class_var),
@@ -752,15 +771,7 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
       lineend = "round"
     ) +
 
-    # Reference points (annual mean rates)
-    geom_point(
-      data = ref_points,
-      aes(x = lambda, y = mean_percentP * 100),
-      color = "black",
-      size = 1
-    ) +
-
-    # Temperature labels in bottom-right corner of each facet
+    # Temperature label (bottom-right of each facet)
     geom_label(
       data = temp_labels,
       aes(label = label),
@@ -778,14 +789,24 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
       color = "black"
     ) +
 
-    # Labels
+    # Axis labels
     labs(
-      x = "Asymptotic Growth Rate (\u03bb)",
-      y = "Populational P content (%)"
+      x = "Asymptotic growth rate (\u03bb)",
+      y = "Mean population P content (%)"
     ) +
 
-    # Facets
-    facet_wrap(class_var ~ theta, nrow = 1) +
+    # Two rows: J1 (top) and A3 (bottom), three columns: temperatures
+    facet_wrap(class_var ~ theta, nrow = 2) +
+
+    # Tag facets (A1-A3 top row, B1-B3 bottom row)
+    tagger::tag_facets(
+      tag = "rc",
+      position = "tl",
+      tag_levels = c("A", "1"),
+      tag_prefix = "(",
+      tag_suffix = ")",
+      tag_sep = ""
+    ) +
 
     # Theme
     theme_custom() +
@@ -794,11 +815,12 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
       strip.background = element_blank(),
       strip.text = element_blank(),
       panel.spacing.x = unit(0.7, "lines"),
-      legend.position = "bottom",
+      panel.spacing.y = unit(1.2, "lines"),
+      legend.position = "none",
       plot.margin = margin(t = 5, b = 5, l = 5, r = 8)
     )
 
-  return(fig_3)
+  return(fig_4)
 }
 
 #' Create survival gradient density figure
