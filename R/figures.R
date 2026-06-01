@@ -531,28 +531,36 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
   return(fig_3)
 }
 
-#' Create survival gradient effect figure
+#' Create survival gradient density figure
 #'
 #' @description
-#' This function creates Figure 4 for the manuscript showing
-#' the effect of survival rate gradients on the relationship between
-#' asymptotic growth rate and phosphorus content.
+#' This function creates Figure 4 for the manuscript showing the density
+#' distribution of the asymptotic population growth rate (lambda) and
+#' population phosphorus content (%P) across survival rate categories for
+#' the J1 and A3 size classes, at each simulated temperature. Survival rates
+#' are binned into four quartile categories. The joint distribution of lambda
+#' and %P is represented by overlapping 2D kernel density estimates for J1
+#' (green) and A3 (pink), with isodensity contour lines, and marginal
+#' density curves projected onto each axis. Facets are arranged by temperature
+#' (rows) and survival category (columns).
 #'
-#' @param multi_param_results Data from multi-parameter simulations
-#' @param monthly_results Monthly simulation results
+#' @param multi_param_results A data.table produced by the multi-parameter
+#'   simulation, containing at minimum the columns \code{theta},
+#'   \code{surv_rate_J1}, \code{surv_rate_A3}, \code{lambda}, and
+#'   \code{mean_percentP}.
+#' @param monthly_results A data.table of monthly simulation results,
+#'   containing at minimum the columns \code{lambda} and \code{mean_percentP}.
+#'   Currently unused in this version of the figure but retained for
+#'   interface consistency with the pipeline.
 #'
-#' @return A ggplot object for Figure 4
+#' @return A ggplot object for Figure 4.
 #'
 #' @export
 #' @importFrom data.table as.data.table
 #' @importFrom dplyr mutate
-#' @importFrom tagger tag_facets
 #' @importFrom tidyr pivot_longer expand_grid
-#' @importFrom data.table as.data.table
-#' @importFrom dplyr mutate
-#' @importFrom tagger tag_facets
-#' @importFrom tidyr pivot_longer expand_grid
-create_survival_gradient_effect <- function(
+#' @importFrom ggnewscale new_scale_fill new_scale_colour
+create_survival_gradient_density_figure <- function(
   multi_param_results,
   monthly_results
 ) {
@@ -576,75 +584,154 @@ create_survival_gradient_effect <- function(
     ) |>
     data.table::as.data.table()
 
-  # Create temperature label
+  # Categorize survival rates into quartile bins
+  plot_data = simulations_data
+  plot_data[,
+    category := factor(
+      ifelse(
+        surv_rate <= 0.25,
+        "s \u2264 0.25",
+        ifelse(
+          surv_rate <= 0.50,
+          "0.25 < s \u2264 0.50",
+          ifelse(
+            surv_rate <= 0.75,
+            "0.50 < s \u2264 0.75",
+            "0.75 < s \u2264 1.00"
+          )
+        )
+      ),
+      levels = c(
+        "s \u2264 0.25",
+        "0.25 < s \u2264 0.50",
+        "0.50 < s \u2264 0.75",
+        "0.75 < s \u2264 1.00"
+      )
+    )
+  ]
+
+  # Facet labels combining survival category and temperature
   temp_labels = tidyr::expand_grid(
-    class = unique(simulations_data$class),
-    theta = unique(simulations_data$theta)
+    category = unique(plot_data$category),
+    theta = unique(plot_data$theta)
   ) |>
     as.data.frame() |>
-    dplyr::mutate(label = paste0(class, " - ", theta, "\u00b0C"))
+    dplyr::mutate(label = paste0(category, " - ", theta, "\u00b0C"))
 
   # Create figure
   fig_4 = ggplot() +
     # Scales
     scale_x_continuous(
-      breaks = seq(0, 5, by = 0.2),
-      minor_breaks = seq(0, 5, by = 0.1),
+      breaks = seq(0, 5, 0.2),
+      minor_breaks = seq(0, 5, 0.1),
       expand = c(0, 0)
     ) +
     scale_y_continuous(
-      breaks = seq(0, 2, by = 0.010),
-      minor_breaks = seq(0, 2, by = 0.005),
+      breaks = seq(0, 2, 0.01),
+      minor_breaks = seq(0, 2, 0.005),
       expand = c(0, 0)
     ) +
-    coord_cartesian(
-      xlim = c(0, 1.500001),
-      ylim = c(0.95, 1.05000001),
-      clip = "on"
-    ) +
+    coord_cartesian(xlim = c(0, 1.5), ylim = c(0.95, 1.05)) +
 
-    # Style
-    scale_color_viridis_c(
-      name = "Class survival",
-      option = "mako",
+    # Background line for lambda = 1
+    geom_vline(xintercept = 1, linewidth = 0.5, col = "darkgrey") +
+
+    # A3 density raster layer
+    ggplot2::stat_density_2d(
+      data = simulations_data[class == "A3"],
+      aes(
+        x = lambda,
+        y = mean_percentP * 100,
+        fill = after_stat(ndensity)
+      ),
+      geom = "raster",
+      contour = FALSE
+    ) +
+    ggplot2::scale_fill_gradientn(
+      colours = c("#ff007700", "#ff0077b0"),
+      name = "A3",
       limits = c(0, 1),
       guide = guide_colorbar(
         title.position = "left",
-        title.vjust = 1,
+        title.vjust = 0.9,
         barwidth = unit(100, "points"),
         barheight = unit(10, "points")
       )
     ) +
 
-    # Background line for \u03bb = 1
-    geom_vline(xintercept = 1, linewidth = 0.5, col = "darkgrey") +
-
-    # Simulated points
-    geom_point(
-      data = simulations_data,
-      aes(x = lambda, y = mean_percentP * 100, color = surv_rate),
-      alpha = 0.6,
-      size = 0.7,
-      stroke = 0
+    # J1 density raster layer (new fill scale)
+    ggnewscale::new_scale_fill() +
+    ggplot2::stat_density_2d(
+      data = simulations_data[class == "J1"],
+      aes(
+        x = lambda,
+        y = mean_percentP * 100,
+        fill = after_stat(ndensity)
+      ),
+      geom = "raster",
+      contour = FALSE
+    ) +
+    ggplot2::scale_fill_gradientn(
+      colours = c("#86c90000", "#86c900b0"),
+      name = "Density for: J1",
+      limits = c(0, 1),
+      guide = guide_colorbar(
+        title.position = "left",
+        title.vjust = 0.9,
+        barwidth = unit(100, "points"),
+        barheight = unit(10, "points")
+      )
     ) +
 
-    # Monthly reference points
-    geom_point(
-      data = monthly_results,
-      aes(x = lambda, y = mean_percentP * 100),
-      color = "red",
-      size = 1.2,
-      shape = 18
+    # A3 isodensity contour lines (new fill and colour scales)
+    ggnewscale::new_scale_fill() +
+    ggnewscale::new_scale_colour() +
+    ggplot2::geom_density_2d(
+      data = simulations_data[class == "A3"],
+      aes(
+        x = lambda,
+        y = mean_percentP * 100,
+        color = after_stat(level)
+      ),
+      contour_var = "ndensity",
+      breaks = c(0.1, 0.25, 0.5, 0.75, 0.9),
+      linewidth = 0.5
+    ) +
+    ggplot2::scale_color_gradientn(
+      colours = c("#ff007720", "#ff0077e0"),
+      name = "A3",
+      limits = c(0, 1),
+      guide = "none"
     ) +
 
-    # Temperature labels in bottom-right corner of each facet
+    # J1 isodensity contour lines (new colour scale)
+    ggnewscale::new_scale_colour() +
+    ggplot2::scale_color_gradientn(
+      colours = c("#86c90020", "#86c900e0"),
+      name = "J1",
+      limits = c(0, 1),
+      guide = "none"
+    ) +
+    ggplot2::geom_density_2d(
+      data = simulations_data[class == "J1"],
+      aes(
+        x = lambda,
+        y = mean_percentP * 100,
+        color = after_stat(level)
+      ),
+      contour_var = "ndensity",
+      breaks = c(0.1, 0.25, 0.5, 0.75, 0.9),
+      linewidth = 0.5
+    ) +
+
+    # Facet labels in upper-right corner
     geom_label(
       data = temp_labels,
       aes(label = label),
       x = Inf,
-      y = -Inf,
-      hjust = 1,
-      vjust = 0,
+      y = Inf,
+      hjust = "inward",
+      vjust = "inward",
       label.padding = unit(0.15, "lines"),
       label.size = 0,
       label.r = unit(0, "lines"),
@@ -655,21 +742,42 @@ create_survival_gradient_effect <- function(
       color = "black"
     ) +
 
+    # Marginal density curves: lambda (x-axis projection)
+    ggnewscale::new_scale_colour() +
+    scale_color_manual(
+      values = c(J1 = "#86c900e0", A3 = "#ff0077e0"),
+      guide = "none"
+    ) +
+    ggplot2::geom_density(
+      data = simulations_data,
+      aes(
+        x = lambda,
+        y = after_stat(ndensity) * 0.01 + 0.95,
+        color = class
+      ),
+      fill = NA,
+      adjust = 1
+    ) +
+
+    # Marginal density curves: %P (y-axis projection)
+    ggplot2::geom_density(
+      data = simulations_data,
+      aes(
+        x = after_stat(ndensity) * 0.1,
+        y = mean_percentP * 100,
+        color = class
+      ),
+      fill = NA,
+      adjust = 1
+    ) +
+
+    # Facets: rows = temperature, columns = survival category
+    facet_wrap(theta ~ category, nrow = 3) +
+
     # Labels
     labs(
       x = "Asymptotic Growth Rate (\u03bb)",
       y = "Populational P content (%)"
-    ) +
-
-    # Facets
-    facet_wrap(class ~ theta, nrow = 2) +
-    tagger::tag_facets(
-      tag = "rc",
-      position = "tl",
-      tag_levels = c("A", "1"),
-      tag_prefix = "(",
-      tag_suffix = ")",
-      tag_sep = ""
     ) +
 
     # Theme
