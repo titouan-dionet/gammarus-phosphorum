@@ -1160,6 +1160,36 @@ tar_plan(
   ),
 
   # ______________________________________________________________________________
+  # Table S1: Percentile distributions for Figure 4 ----
+  # ______________________________________________________________________________
+
+  # Compute Table S1
+  tar_target(
+    table_S1_data,
+    compute_table_S1(multi_param_results),
+    description = "Table S1: percentile distributions of lambda and population P content by survival rate category and temperature"
+  ),
+
+  # Save Table S1
+  tar_target(
+    save_table_S1,
+    {
+      file_path <- file.path(tab_output_dir, "table_S1_ecdf_percentiles.csv")
+      data.table::fwrite(
+        x = table_S1_data,
+        bom = TRUE,
+        encoding = "UTF-8",
+        file = file_path,
+        sep = ";",
+        dec = ",",
+        row.names = FALSE
+      )
+      file_path
+    },
+    description = "Saved Table S1 as CSV"
+  ),
+
+  # ______________________________________________________________________________
   # Save figures ----
   # ______________________________________________________________________________
 
