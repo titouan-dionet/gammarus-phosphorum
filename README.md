@@ -2,178 +2,203 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-This repository contains the code and data for analyzing phosphorus stoichiometry and population dynamics in *Gammarus fossarum*, a freshwater amphipod. The project investigates whether the Growth Rate Hypothesis (GRH) applies at the population level by combining matrix population models with elemental stoichiometry.
+Companion code to Dionet et al. (in prep.) testing whether the Growth Rate Hypothesis (GRH), well established at the individual level, applies at the population level in *Gammarus fossarum* (Crustacea, Amphipoda). The study integrates phosphorus content measurements with a size-structured Lefkovitch matrix population model and demographic simulations across a range of survival rates and temperatures.
+
+## Citation
+
+If you use this code, please cite the associated manuscript:
+
+> Dionet T. et al. (in prep.). Testing the Growth Rate Hypothesis at the population level in *Gammarus fossarum*. [DOI to be completed after acceptance]
+
+Preprint available at: [DOI BioRxiv to be completed]
+
+This code is archived at: [SWHID Software Heritage to be completed]
+
+## Data Availability
+
+Raw data used in this study are archived at DOREL (Universite de Lorraine, recherche.data.gouv.fr):
+
+> Dionet T. et al. (2025). Raw phosphorus measurements and survival rates for *Gammarus fossarum* population modeling. DOREL. [DOI to be completed]
+
+Monthly survival rates are derived from Coulaud et al. (2014) and are included in the data archive above.
 
 ## Repository Structure
 
 ```
 gammarus-phosphorum/
+│
+├── R/                              # Source functions (R package structure)
+│   ├── data_processing.R          # Data loading and processing functions
+│   ├── figures.R                  # Figure creation functions
+│   ├── gammarus-phosphorum-package.R
+│   ├── population_dynamics.R      # Lefkovitch matrix population model
+│   ├── simulation.R               # Simulation and parameter sampling functions
+│   ├── statistics.R               # Statistical testing functions
+│   ├── stoichiometry.R            # Stoichiometric calculation functions
+│   └── visualization.R            # Graphical utilities and custom theme
+│
+├── data/
+│   └── raw_data/                  # Raw input data (not distributed here; see Data Availability)
+│       ├── P_conc_range_2023_04.csv
+│       ├── P_conc_range_2023_07.csv
+│       ├── phosphorus_measurements_2023_07.csv
+│       ├── phosphorus_measurements_individual_2023_04.csv
+│       └── monthly_surv_rates_coulaud_2014.csv
+│
+├── outputs/                       # Generated outputs (not versioned)
+│   ├── figures/                   # Generated figures (PNG and SVG)
+│   ├── simulation_results/        # Simulation result tables (CSV)
+│   ├── tables/                    # Supplementary tables (CSV)
+│   └── pipeline/                  # Pipeline visualizations (HTML)
+│
+├── tests/
+│   ├── testthat/
+│   │   └── test-population_dynamics.R
+│   └── testthat.R
+│
 ├── analyses/              # Pipeline and analysis code
 │   └── pipeline/
 │       └── _targets.R     # Pipeline definition using the targets package
-│
-├── data/                  # Input data
-│   └── raw_data/          # Raw measurement data
-│       ├── monthly_surv_rates_coulaud_2014.csv
-│       ├── phosphorus_measurements_2023_07.csv
-│       └── P_conc_range_2023_07.csv
-│
-├── R/                     # Source code for the project
-│   ├── data_processing.R  # Data processing functions
-│   ├── figures.R          # Figure creation functions
-│   ├── gammarus-phosphorum-package.R
-│   ├── population_dynamics.R  # Matrix population model functions
-│   ├── simulation.R       # Simulation utility functions
-│   ├── statistics.R       # Statistical functions
-│   ├── stoichiometry.R    # Stoichiometric analysis functions
-│   └── visualization.R    # Graphical utilities and theme settings
-│
-├── outputs/               # Generated output files (figures, results)
-│   ├── figures/           # Generated figures
-│   │   ├── figure_1_phosphorus_by_size_class.png/svg
-│   │   ├── figure_2_elasticity_analysis_survival.png/svg
-│   │   ├── figure_3_j1_a3_survival_effect.png/svg
-│   │   ├── figure_4_survival_gradient_effect.png/svg
-│   │   ├── figure_S1_temperature_transition_rates.png/svg
-│   │   ├── figure_S2_elasticity_analysis_fecundity.png/svg
-│   │   ├── figure_S3_elasticity_analysis_growth.png/svg
-│   │   └── figure_S4_model_parameter_elasticity_*.png/svg
-│   ├── pipeline/          # Pipeline visualization files
-│   │   ├── pipeline_post_execution.html
-│   │   └── pipeline_pre_execution.html
-│   ├── simulation_results/ # Simulation result data
-│   │   ├── annual_results.csv
-│   │   ├── comprehensive_elasticity_results.csv
-│   │   ├── model_parameter_elasticity_results.csv
-│   │   ├── monthly_results.csv
-│   │   ├── multi_param_results.csv
-│   │   └── single_param_results.csv
-│   └── _targets/          # Cache data for the targets pipeline
-│
-├── fonts/                 # Custom fonts for figures
-│   └── roboto/            # Roboto font files
-│
-├── tests/                 # Unit tests for R functions
-│   ├── testthat/          # Test files
-│   │   └── test-population_dynamics.R
-│   └── testthat.R         # Test runner
-│
-├── gammarus-phosphorum.Rproj # RStudio project file
-├── DESCRIPTION            # Package description and dependencies
-├── LICENSE.md             # GPL-3 license
-├── CODE_OF_CONDUCT.md     # Contributor code of conduct
-├── NAMESPACE              # Package namespace definitions
-├── make.R                 # Main script to execute the pipeline
-├── _targets.yaml          # Targets configuration
-└── README.md              # This file
+├── make.R                         # Main entry point to execute the pipeline
+├── DESCRIPTION                    # Package metadata and dependencies
+├── NAMESPACE                      # Package namespace (generated by roxygen2)
+└── README.md                      # This file
 ```
 
-## Core Functionality
+## Scientific Context
 
-### Population Dynamics Model
+The Growth Rate Hypothesis (Sterner and Elser 2002) predicts that rapidly growing organisms have higher phosphorus demands due to ribosome biosynthesis, producing a positive relationship between growth rate and phosphorus content at the individual level. Whether this relationship scales to the population level remains largely untested.
 
-The project uses a Lefkovitch matrix population model based on five size classes of *Gammarus fossarum*:
+This study addresses this gap using *Gammarus fossarum* as a model organism, combining:
 
-- Two juvenile classes: J1 (<3.5 mm) and J2 (3.5-5.2 mm)
-- Three adult classes: A1 (5.2-6 mm), A2 (6-7 mm), and A3 (>7 mm)
+- empirical measurements of phosphorus content across five size classes;
+- a size-structured Lefkovitch matrix population model parameterized at three temperatures (8, 12, and 16 deg C);
+- demographic simulations exploring a wide range of survival rate combinations to assess the relationship between population growth rate (lambda) and population-level phosphorus content.
 
-The model incorporates:
-- Size-dependent growth rates influenced by temperature
-- Size-dependent reproduction rates
-- Size-dependent survival rates
-- Phosphorus content specific to each size class
+## Model Description
 
-Key functions in `population_dynamics.R`:
-- `growth_rates_matrix()`: Calculates transition rates between size classes
-- `fecondity_rates_matrix()`: Determines reproduction rates for adult classes
-- `survival_rates_matrix()`: Creates survival rate matrix
-- `Leslie_matrix()`: Combines the above matrices into a complete population matrix
-- `find_lambda_SSD()`: Calculates asymptotic growth rate and stable stage distribution
-- `elasticity_matrix()`: Performs elasticity analysis on the Leslie matrix
-- `calculate_transition_rates()`: Calculates transition rates across a range of temperatures
+### Population Structure
 
-### Stoichiometry Integration
+The model comprises five size classes based on body length:
 
-The project integrates elemental stoichiometry (particularly phosphorus) with population dynamics by:
+| Class | Size range |
+|-------|-----------|
+| J1    | < 3.5 mm  |
+| J2    | 3.5 - 5.2 mm |
+| A1    | 5.2 - 6.0 mm |
+| A2    | 6.0 - 7.0 mm |
+| A3    | > 7.0 mm  |
 
-1. Measuring phosphorus content in different size classes
-2. Creating a stoichiometry matrix for each size class
-3. Calculating population-level phosphorus content based on stable stage distribution
+### Matrix Components
 
-Key functions in `stoichiometry.R`:
-- `elem_rates()`: Calculates elemental composition at individual and population levels
+The Lefkovitch matrix is assembled from three component matrices (see `population_dynamics.R`):
 
-### Simulation Framework
+- `growth_rates_matrix()`: size class transition rates as a function of temperature, based on a von Bertalanffy growth model and molt cycle equations;
+- `fecondity_rates_matrix()`: reproduction rates for adult classes, accounting for sex ratio and proportion of gravid females;
+- `survival_rates_matrix()`: size class-specific monthly survival rates.
 
-The project includes multiple simulation approaches in `simulation.R`:
+Key analytical functions:
 
-1. **Single-parameter simulations**: Vary one survival rate while keeping others constant
-2. **Multi-parameter simulations**: Randomly vary all survival rates simultaneously
-3. **Monthly variation**: Incorporate seasonal changes in survival rates
-4. **Elasticity analysis**
-- `calculate_comprehensive_elasticity()`: Examines how small changes in survival, fecundity, or growth affect population growth and phosphorus content
-- `calculate_model_parameter_elasticity()`: Analyzes sensitivity to underlying model parameters
+- `find_lambda_SSD()`: computes the asymptotic population growth rate (lambda) and stable stage distribution (SSD);
+- `elasticity_matrix()`: performs elasticity analysis on matrix entries;
+- `elem_rates()`: calculates population-level phosphorus content as a weighted sum over the SSD.
 
-## Figures and Results
+## Simulation Framework
 
-The pipeline generates four main figures:
+Four simulation approaches are implemented in `simulation.R`:
 
-1. **Figure 1**: Phosphorus content across different size classes (individual level)
-2. **Figure 2**: Sensitivity analysis showing the effects of survival rates on population growth and phosphorus content
-3. **Figure 3**: Effects of J1 and A3 survival on the relationship between growth rate and phosphorus
-4. **Figure 4**: Full parameter space exploration of growth rate and phosphorus relationship
+1. **Single-parameter simulations** (Simulation 1): one survival rate is varied across its full range [0, 1] while the other four are held at their annual mean values derived from Coulaud et al. (2014). Performed for each size class and each temperature (1,000 iterations per class per temperature).
 
-The pipeline also generates four supplementary figures.
+2. **Multi-parameter simulations** (Simulation 2): all five survival rates are drawn simultaneously and independently from a uniform distribution U(0.001, 1). Performed for each temperature (10,000 iterations per temperature).
+
+3. **Monthly simulations** (Simulation 3): survival rates follow the seasonal variation observed in Coulaud et al. (2014), iterated over 12 months.
+
+4. **Elasticity analyses**: sensitivity of lambda and population phosphorus content to small relative changes in survival rates, fecundity rates, and growth transition rates (`calculate_comprehensive_elasticity()`), as well as to underlying model parameters (`calculate_model_parameter_elasticity()`).
+
+## Figures
+
+The pipeline generates the following figures:
+
+### Main figures
+
+| Figure | Filename | Description |
+|--------|----------|-------------|
+| Figure 1 | `figure_1_conceptual_figure` | Conceptual figure illustrating the GRH at individual and population levels |
+| Figure 2 | `figure_2_phosphorus_by_size_class` | Phosphorus content (% dry mass) across size classes |
+| Figure 3 | `figure_3_elasticity_analysis_survival` | Sensitivity of lambda and population P content to survival rates |
+| Figure 4 | `figure_4_j1_a3_survival_effect` | Effect of J1 and A3 survival rates on the lambda-P relationship |
+| Figure 5 | `figure_5_survival_gradient_effect` | Density distribution of lambda and P content across survival categories and temperatures |
+
+### Supplementary figures
+
+| Figure | Filename | Description |
+|--------|----------|-------------|
+| Figure S1 | `figure_S1_phosphorus_by_sex` | Phosphorus content by sex in adult individuals |
+| Figure S2 | `figure_S2_temperature_transition_rates` | Size class transition rates as a function of temperature (2-25 deg C) |
+| Figure S3 | `figure_S3_elasticity_analysis_fecundity` | Sensitivity of lambda and population P content to fecundity rates |
+| Figure S4 | `figure_S4_elasticity_analysis_growth` | Sensitivity of lambda and population P content to transition rates |
+| Figure S5 | `figure_S5_model_parameter_elasticity_*` | Sensitivity of lambda and population P content to underlying model parameters |
+
+All figures are saved in PNG and SVG formats in `outputs/figures/`.
 
 ## Getting Started
 
 ### Prerequisites
 
-This project uses R with several packages. You can restore the required packages using:
+This project uses R (4.4.2) structured as an R package with a `targets` pipeline. All dependencies are managed via `renv`.
 
 ```r
 # Install renv if not already installed
 install.packages("renv")
 
-# Restore dependencies
+# Restore the project library
 renv::restore()
 ```
 
 ### Running the Analysis
 
-The analysis pipeline is managed using the `targets` package, which ensures reproducibility and efficient computation. To execute the complete pipeline:
+The full pipeline is executed via:
 
 ```r
-# Execute the complete pipeline
 source("make.R")
 ```
 
-This will:
-1. Restore dependencies using `renv`
-2. Configure the targets pipeline
-3. Generate a visualization of the planned pipeline
-4. Execute all analysis steps
-5. Create output figures and data files
+This script will:
 
-### Exploring Results
+1. restore R dependencies via `renv`;
+2. configure the `targets` pipeline (store and script paths);
+3. generate a pre-execution pipeline visualization saved to `outputs/pipeline/`;
+4. run all pipeline targets via `targets::tar_make()`;
+5. generate a post-execution pipeline visualization.
 
-After running the pipeline, you can explore the results:
-- Generated figures are saved in `outputs/figures/`
-- Simulation data is saved in `outputs/simulation_results/`
-- Pipeline visualization is available in `outputs/pipeline/`
+Outputs are written to the `outputs/` directory (figures, simulation results, tables).
+
+### Exploring Results Interactively
+
+After running the pipeline, individual targets can be loaded and inspected:
+
+```r
+# Inspect the pipeline manifest
+targets::tar_manifest()
+
+# Visualize the dependency graph
+targets::tar_visnetwork()
+
+# Load a specific target into the R session
+targets::tar_load(multi_param_results)
+targets::tar_load(elasticity_results)
+```
 
 ## Development
 
 ### Adding New Functions
 
-1. Add new functions to the appropriate R file in the `R/` directory
-2. Document functions using roxygen2 format
-3. Run `devtools::document()` to generate documentation
-4. Add tests in the `tests/testthat/` directory
+1. Add functions to the appropriate file in `R/`.
+2. Document using `roxygen2` format (`@param`, `@return`, `@export`).
+3. Run `devtools::document()` to update `NAMESPACE`.
+4. Add unit tests in `tests/testthat/`.
 
-### Testing
-
-Run the tests using:
+### Running Tests
 
 ```r
 devtools::test()
@@ -181,13 +206,16 @@ devtools::test()
 
 ## Author
 
-**Titouan Dionet** - [ORCID: 0009-0006-5602-1873](https://orcid.org/0009-0006-5602-1873)  
-Email: titouan.dionet@univ-lorraine.fr
+**Titouan Dionet**
+[ORCID: 0009-0006-5602-1873](https://orcid.org/0009-0006-5602-1873)
+titouan.dionet@univ-lorraine.fr
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the GNU General Public License v3.0. See [LICENSE.md](LICENSE.md) for details.
 
-## Code of Conduct
+## References
 
-Please note that the Gammarus Phosphorum project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By contributing to this project, you agree to abide by its terms.
+Coulaud, R., Geffard, O., Coquillat, A., Quéau, H., Charles, S., & Chaumot, A. (2014). Ecological Modeling for the Extrapolation of Ecotoxicological Effects Measured during in Situ Assays in Gammarus. Environmental Science & Technology, 48(11), 6428–6436.
+
+Sterner R.W. and Elser J.J. (2002). Ecological Stoichiometry: The Biology of Elements from Molecules to the Biosphere. Princeton University Press.
