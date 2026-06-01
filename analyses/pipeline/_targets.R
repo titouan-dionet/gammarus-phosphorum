@@ -917,24 +917,20 @@ tar_plan(
   ),
 
   # ______________________________________________________________________________
-  # Figure 1: Individual phosphorus rate ----
+  # Figure 1: GRH conceptual figure ----
   # ______________________________________________________________________________
 
-  # Create Figure 1
   tar_target(
     figure_1,
     {
       load_fonts
-      create_phosphorus_figure(
-        clean_processed_phosphorus_data,
-        phosphorus_stats$info
-      )
+      create_grh_conceptual_figure()
     },
-    description = "Figure 1: Phosphorus content across different size classes"
+    description = "Figure 1: Conceptual figure illustrating the GRH at individual and population levels"
   ),
 
   # ______________________________________________________________________________
-  # Figure 2: Sensitivity analysis (Elasticity) ----
+  # Figure 2: Individual phosphorus rate ----
   # ______________________________________________________________________________
 
   # Create Figure 2
@@ -942,28 +938,45 @@ tar_plan(
     figure_2,
     {
       load_fonts
+      create_phosphorus_figure(
+        clean_processed_phosphorus_data,
+        phosphorus_stats$info
+      )
+    },
+    description = "Figure 2: Phosphorus content across different size classes"
+  ),
+
+  # ______________________________________________________________________________
+  # Figure 3: Sensitivity analysis (Elasticity) ----
+  # ______________________________________________________________________________
+
+  # Create Figure 3
+  tar_target(
+    figure_3,
+    {
+      load_fonts
       create_elasticity_figure(
         elasticity_results,
         analysis_type = "survival"
       )
     },
-    description = "Figure 2: Sensitivity of population growth rate and phosphorus content to survival rates"
+    description = "Figure 3: Sensitivity of population growth rate and phosphorus content to survival rates"
   ),
 
   # ______________________________________________________________________________
-  # Figure 3: J1 and A3 survival effect ----
+  # Figure 4: J1 and A3 survival effect ----
   # ______________________________________________________________________________
 
-  # Prepare data for Figure 3
+  # Prepare data for Figure 4
   tar_target(
-    figure_3_data,
+    figure_4_data,
     single_param_results[class_var %in% c("J1", "A3")],
-    description = "Filtered data for Figure 3 showing the effect of J1 and A3 survival"
+    description = "Filtered data for Figure 4 showing the effect of J1 and A3 survival"
   ),
 
-  # Calculate reference points for Figure 3
+  # Calculate reference points for Figure 4
   tar_target(
-    figure_3_reference_points,
+    figure_4_reference_points,
     annual_simulations[, .(
       lambda = lambda,
       mean_percentP = mean_percentP,
@@ -972,23 +985,23 @@ tar_plan(
     description = "Annual reference points for population growth and phosphorus content"
   ),
 
-  # Create Figure 3
-  tar_target(
-    figure_3,
-    {
-      load_fonts
-      create_j1_a3_survival_effect(figure_3_data, figure_3_reference_points)
-    },
-    description = "Figure 3: Effect of J1 and A3 survival on growth rate and phosphorus relationship"
-  ),
-
-  # ______________________________________________________________________________
-  # Figure 4: Survival gradient effect ----
-  # ______________________________________________________________________________
-
   # Create Figure 4
   tar_target(
     figure_4,
+    {
+      load_fonts
+      create_j1_a3_survival_effect(figure_4_data, figure_4_reference_points)
+    },
+    description = "Figure 4: Effect of J1 and A3 survival on growth rate and phosphorus relationship"
+  ),
+
+  # ______________________________________________________________________________
+  # Figure 5: Survival gradient effect ----
+  # ______________________________________________________________________________
+
+  # Create Figure 5
+  tar_target(
+    figure_5,
     {
       load_fonts
       create_survival_gradient_density_figure(
@@ -996,7 +1009,7 @@ tar_plan(
         monthly_simulations
       )
     },
-    description = "Figure 4: Density distribution of population growth rate and phosphorus content across survival rate categories and temperatures"
+    description = "Figure 5: Density distribution of population growth rate and phosphorus content across survival rate categories and temperatures"
   ),
 
   # ______________________________________________________________________________
@@ -1201,12 +1214,12 @@ tar_plan(
     save_figure_1,
     save_figure(
       plot = figure_1,
-      basename = "figure_1_phosphorus_by_size_class",
+      basename = "figure_1_conceptual_figure",
       dir = fig_output_dir,
-      width = 720,
-      height = 720,
+      width = 2800,
+      height = 1400,
       units = "px",
-      dpi = 200
+      dpi = 300
     ),
     description = "Saved Figure 1 in multiple formats"
   ),
@@ -1216,12 +1229,12 @@ tar_plan(
     save_figure_2,
     save_figure(
       plot = figure_2,
-      basename = "figure_2_elasticity_analysis_survival",
+      basename = "figure_2_phosphorus_by_size_class",
       dir = fig_output_dir,
-      width = 2400,
-      height = 1800,
+      width = 720,
+      height = 720,
       units = "px",
-      dpi = 300
+      dpi = 200
     ),
     description = "Saved Figure 2 in multiple formats"
   ),
@@ -1231,12 +1244,12 @@ tar_plan(
     save_figure_3,
     save_figure(
       plot = figure_3,
-      basename = "figure_3_j1_a3_survival_effect",
+      basename = "figure_3_elasticity_analysis_survival",
       dir = fig_output_dir,
-      width = 1024,
-      height = 550,
+      width = 2400,
+      height = 1800,
       units = "px",
-      dpi = 200
+      dpi = 300
     ),
     description = "Saved Figure 3 in multiple formats"
   ),
@@ -1246,14 +1259,29 @@ tar_plan(
     save_figure_4,
     save_figure(
       plot = figure_4,
-      basename = "figure_4_survival_gradient_effect",
+      basename = "figure_4_j1_a3_survival_effect",
+      dir = fig_output_dir,
+      width = 1024,
+      height = 550,
+      units = "px",
+      dpi = 200
+    ),
+    description = "Saved Figure 4 in multiple formats"
+  ),
+
+  # Save Figure 5
+  tar_target(
+    save_figure_5,
+    save_figure(
+      plot = figure_5,
+      basename = "figure_5_survival_gradient_effect",
       dir = fig_output_dir,
       width = 2000,
       height = 1750,
       units = "px",
       dpi = 200
     ),
-    description = "Saved Figure 4 in multiple formats"
+    description = "Saved Figure 5 in multiple formats"
   ),
 
   # Save Figure S1
