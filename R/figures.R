@@ -28,7 +28,7 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
     ) +
     coord_cartesian(ylim = c(0.8, 1.35), clip = "on") +
 
-    scale_color_manual(
+    ggplot2::scale_color_manual(
       values = c(
         J1 = "#9ACD32",
         J2 = "#FFD700",
@@ -40,7 +40,7 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
       name = "class",
       guide = "none"
     ) +
-    scale_fill_manual(
+    ggplot2::scale_fill_manual(
       values = c(
         J1 = "#9ACD32",
         J2 = "#FFD700",
@@ -57,7 +57,7 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
     aes(x = class, y = P_percent * 100, col = class) +
 
     # Points with outlier highlighted
-    geom_jitter(
+    ggplot2::geom_jitter(
       aes(fill = class),
       shape = 21,
       size = 1,
@@ -73,7 +73,7 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
       shape = 13,
       size = 2
     ) +
-    geom_errorbar(
+    ggplot2::geom_errorbar(
       data = stats_info,
       aes(
         x = as.factor(trt),
@@ -515,7 +515,7 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
     ) +
 
     # Facets
-    facet_wrap(~theta, nrow = 1) +
+    facet_wrap(class_var ~ theta, nrow = 1) +
 
     # Theme
     theme_custom() +
@@ -685,6 +685,108 @@ create_survival_gradient_effect <- function(
     )
 
   return(fig_4)
+}
+
+#' Create supplementary figure S1 for sex differences in phosphorus content
+#'
+#' @description
+#' Creates Figure S1 for the manuscript, displaying individual phosphorus
+#' content (% of dry mass) as a function of sex (male, female, ovigerous
+#' female). Individual measurements are shown as jittered points, with
+#' mean +/- standard error and significance letters from post-hoc tests
+#' overlaid.
+#'
+#' @param phosphorus_data A data table of processed phosphorus data containing
+#'   columns \code{sex} and \code{P_percent}
+#' @param stats_info A data table of statistical results containing columns
+#'   \code{trt} (sex group), \code{mean}, \code{se}, \code{max}, and
+#'   \code{signif_letter} (compact letter display from post-hoc comparison)
+#'
+#' @return A ggplot object representing Figure S1
+#'
+#' @export
+create_phosphorus_sex_difference_figure <- function(
+  phosphorus_data,
+  stats_info
+) {
+  # Create figure
+  p_plot <- ggplot(phosphorus_data) +
+    # Formatting
+    scale_y_continuous(
+      breaks = seq(0, 100, by = 0.10),
+      minor_breaks = seq(0, 100, by = 0.05),
+      expand = c(0, 0)
+    ) +
+    coord_cartesian(ylim = c(0, 1.20001), clip = "on") +
+
+    ggplot2::scale_color_manual(
+      values = c(
+        M = "#5697ec",
+        F = "#f1536d",
+        F.ovi = "#ca8dee"
+      ),
+      name = "sex",
+      guide = "none"
+    ) +
+    ggplot2::scale_fill_manual(
+      values = c(
+        M = "#5697ec",
+        F = "#f1536d",
+        F.ovi = "#ca8dee"
+      ),
+      name = "sex",
+      guide = "none"
+    ) +
+
+    # Data mapping
+    aes(x = sex, y = P_percent * 100, col = sex) +
+
+    # Points with outlier highlighted
+    ggplot2::geom_jitter(
+      aes(fill = sex),
+      shape = 21,
+      size = 1,
+      alpha = 0.4,
+      width = 0.05
+    ) +
+
+    # Mean marker (star symbol)
+    # stat_summary(fun = "mean", col = "red", size = 2, shape = 13, geom = "point") +
+    geom_point(
+      data = stats_info,
+      aes(x = as.factor(trt), y = mean * 100, col = trt),
+      shape = 13,
+      size = 2
+    ) +
+    ggplot2::geom_errorbar(
+      data = stats_info,
+      aes(
+        x = as.factor(trt),
+        y = NULL,
+        ymin = (mean - se) * 100,
+        ymax = (mean + se) * 100,
+        col = trt
+      ),
+      linewidth = 0.5,
+      width = 0.2
+    ) +
+
+    # Significance letters
+    geom_text(
+      data = stats_info,
+      aes(y = max * 100 + 0.05, label = signif_letter, x = as.factor(trt)),
+      fontface = "bold",
+      col = "black",
+      family = "Roboto"
+    ) +
+
+    # Labels
+    labs(x = "Sex", y = "Individual P content (%)") +
+
+    # Theme
+    theme_custom()
+
+  return(p_plot)
 }
 
 #' Create a plot of significant transition rates between size classes
