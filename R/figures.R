@@ -5,16 +5,286 @@
 # Date: April 2025
 ###############################################################################
 
+#' Create conceptual figure for the Growth Rate Hypothesis at individual
+#' and population levels
+#'
+#' @description
+#' Creates Figure 1 for the manuscript introduction, illustrating the
+#' Growth Rate Hypothesis (GRH) at the intra-specific (individual) level
+#' and four alternative hypotheses (H1-H4) for its potential extension to
+#' the population level. All curves are schematic and do not represent
+#' empirical data. The figure is composed of three panels: (a) individual
+#' phosphorus content and relative growth rate as a function of body size,
+#' (b) the resulting positive individual-level GRH relationship, and (c)
+#' four hypothetical relationships between mean population phosphorus
+#' content and the asymptotic population growth rate (lambda).
+#'
+#' @return A patchwork ggplot object representing Figure 1
+#' @export
+create_grh_conceptual_figure <- function() {
+  # ____________________________________________________________________________
+  # Shared style elements ----
+  # ____________________________________________________________________________
+
+  arrow_style <- grid::arrow(length = unit(0.2, "cm"), type = "closed")
+
+  base_theme <- theme_custom() +
+    theme(
+      axis.text = element_blank(),
+      axis.ticks = element_blank(),
+      panel.grid = element_blank(),
+      axis.title = element_text(size = 9, family = "Roboto-Medium"),
+      plot.tag = element_text(size = 10, face = "bold", family = "Roboto-Bold"),
+      plot.title = element_text(
+        size = 9,
+        family = "Roboto-Medium",
+        hjust = 0.5
+      ),
+      plot.title.position = "plot"
+    )
+
+  # ____________________________________________________________________________
+  # Panel (a): Individual %P and RGR vs body size ----
+  # ____________________________________________________________________________
+
+  x_size <- seq(0, 10, length.out = 200)
+
+  panel_a_data <- data.frame(
+    x = rep(x_size, 2),
+    y = c(
+      exp(-0.35 * x_size) * 0.85 + 0.15, # %P: decreasing exponential
+      exp(-0.5 * x_size) * 0.7 + 0.05 # RGR: steeper decrease
+    ),
+    curve = rep(c("Individual %P", "Relative Growth Rate"), each = 200)
+  )
+
+  panel_a <- ggplot(panel_a_data, aes(x = x, y = y, linetype = curve)) +
+    geom_line(linewidth = 0.7, color = "black") +
+    ggplot2::scale_linetype_manual(
+      values = c("Individual %P" = "solid", "Relative Growth Rate" = "dashed"),
+      guide = "none"
+    ) +
+    # Axis arrows
+    ggplot2::annotate(
+      "segment",
+      x = 0,
+      xend = 10.5,
+      y = -Inf,
+      yend = -Inf,
+      arrow = arrow_style,
+      linewidth = 0.5
+    ) +
+    ggplot2::annotate(
+      "segment",
+      x = -Inf,
+      xend = -Inf,
+      y = 0,
+      yend = 1.08,
+      arrow = arrow_style,
+      linewidth = 0.5
+    ) +
+    # Curve labels
+    ggplot2::annotate(
+      "text",
+      x = 7.5,
+      y = 0.30,
+      label = "Individual %P",
+      size = 2.8,
+      family = "Roboto-Medium",
+      hjust = 0
+    ) +
+    ggplot2::annotate(
+      "text",
+      x = 7.5,
+      y = 0.12,
+      label = "RGR",
+      size = 2.8,
+      family = "Roboto-Medium",
+      hjust = 0,
+      fontface = "italic"
+    ) +
+    coord_cartesian(xlim = c(0, 10.5), ylim = c(0, 1.1), clip = "off") +
+    labs(
+      title = "Growth Rate Hypothesis (GRH)\napplied at the intra-specific level",
+      x = "Individual size",
+      y = "Individual %P",
+      tag = "(A)"
+    ) +
+    base_theme +
+    theme(
+      plot.title = element_text(
+        size = 9,
+        hjust = 0.5,
+        family = "Roboto-Medium",
+        margin = margin(b = 4)
+      ),
+      plot.title.position = "plot",
+      axis.title.y.right = element_text(size = 9)
+    )
+
+  # ____________________________________________________________________________
+  # Panel (b): Insert -- Individual %P vs individual RGR ----
+  # ____________________________________________________________________________
+
+  x_rgr <- seq(0, 1, length.out = 100)
+
+  panel_b_data <- data.frame(
+    x = x_rgr,
+    y = 0.2 + 0.75 * x_rgr
+  )
+
+  panel_b <- ggplot(panel_b_data, aes(x = x, y = y)) +
+    geom_line(linewidth = 0.7, color = "black") +
+    ggplot2::annotate(
+      "segment",
+      x = 0,
+      xend = 1.08,
+      y = -Inf,
+      yend = -Inf,
+      arrow = arrow_style,
+      linewidth = 0.4
+    ) +
+    ggplot2::annotate(
+      "segment",
+      x = -Inf,
+      xend = -Inf,
+      y = 0.15,
+      yend = 1.0,
+      arrow = arrow_style,
+      linewidth = 0.4
+    ) +
+    coord_cartesian(xlim = c(0, 1.1), ylim = c(0.15, 1.0), clip = "off") +
+    labs(x = "Individual RGR", y = "Individual %P", tag = "(B)") +
+    base_theme +
+    theme(
+      axis.title = element_text(size = 7.5, family = "Roboto-Medium"),
+      plot.tag = element_text(size = 9, face = "bold")
+    )
+
+  # ____________________________________________________________________________
+  # Panel (c): Hypotheses H1-H4 at population level ----
+  # ____________________________________________________________________________
+
+  x_lambda <- seq(0, 10, length.out = 300)
+
+  # H1: positive linear (GRH holds)
+  h1 <- data.frame(x = x_lambda, y = 0.3 + 0.065 * x_lambda, hyp = "H1")
+  # H2: flat (no relationship)
+  h2 <- data.frame(x = x_lambda, y = rep(0.55, 300), hyp = "H2")
+  # H3: negative linear (reverse GRH)
+  h3 <- data.frame(x = x_lambda, y = 0.85 - 0.065 * x_lambda, hyp = "H3")
+  # H4: non-monotonic (complex)
+  h4 <- data.frame(
+    x = x_lambda,
+    y = 0.55 + 0.18 * sin(x_lambda * 0.75 - 0.5),
+    hyp = "H4"
+  )
+
+  panel_c_data <- rbind(h1, h2, h3, h4)
+
+  # Label positions (right end of each curve)
+  labels_c <- data.frame(
+    x = c(10, 10, 10, 10),
+    y = c(
+      tail(h1$y, 1) + 0.03,
+      tail(h2$y, 1) + 0.03,
+      tail(h3$y, 1) - 0.03,
+      tail(h4$y, 1) + 0.03
+    ),
+    hyp = c("H1", "H2", "H3", "H4"),
+    label = c("H1", "H2", "H3", "H4"),
+    hjust = c(0, 0, 0, 0)
+  )
+
+  hyp_colors <- c(
+    H1 = "#2166ac",
+    H2 = "#4dac26",
+    H3 = "#d01c8b",
+    H4 = "#f1a340"
+  )
+
+  hyp_linetypes <- c(
+    H1 = "solid",
+    H2 = "dashed",
+    H3 = "dotted",
+    H4 = "dotdash"
+  )
+
+  panel_c <- ggplot(
+    panel_c_data,
+    aes(x = x, y = y, color = hyp, linetype = hyp)
+  ) +
+    geom_line(linewidth = 0.75) +
+    geom_text(
+      data = labels_c,
+      aes(x = x, y = y, label = label, color = hyp),
+      size = 3,
+      fontface = "bold",
+      hjust = -0.1,
+      family = "Roboto-Bold",
+      inherit.aes = FALSE
+    ) +
+    ggplot2::annotate(
+      "text",
+      x = 5,
+      y = 1.06,
+      label = "?",
+      size = 8,
+      color = "grey50",
+      family = "Roboto-Bold"
+    ) +
+    scale_color_manual(values = hyp_colors, guide = "none") +
+    ggplot2::scale_linetype_manual(values = hyp_linetypes, guide = "none") +
+    ggplot2::annotate(
+      "segment",
+      x = 0,
+      xend = 11,
+      y = -Inf,
+      yend = -Inf,
+      arrow = arrow_style,
+      linewidth = 0.5
+    ) +
+    ggplot2::annotate(
+      "segment",
+      x = -Inf,
+      xend = -Inf,
+      y = 0.15,
+      yend = 1.1,
+      arrow = arrow_style,
+      linewidth = 0.5
+    ) +
+    coord_cartesian(xlim = c(0, 11.5), ylim = c(0.15, 1.15), clip = "off") +
+    labs(
+      x = expression("Population asymptotic growth rate (" * lambda * ")"),
+      y = "Mean population %P",
+      tag = "(C)",
+      title = "Relationship between mean population %P\nand population-level growth rate?"
+    ) +
+    base_theme
+
+  # ____________________________________________________________________________
+  # Assemble with patchwork ----
+  # ____________________________________________________________________________
+
+  left_panel <- (panel_a / panel_b) +
+    patchwork::plot_layout(heights = c(2, 1))
+
+  final_figure <- (left_panel | panel_c) +
+    patchwork::plot_layout(widths = c(1, 1.6))
+
+  return(final_figure)
+}
+
 #' Create phosphorus content figure
 #'
 #' @description
-#' This function creates Figure 1 for the manuscript showing
+#' This function creates Figure 2 for the manuscript showing
 #' phosphorus content by size class.
 #'
 #' @param phosphorus_data Processed phosphorus data
 #' @param stats_info Statistical results with significance letters
 #'
-#' @return A ggplot object for Figure 1
+#' @return A ggplot object for Figure 2
 #'
 #' @export
 create_phosphorus_figure <- function(phosphorus_data, stats_info) {
@@ -107,14 +377,14 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
 #' Create comprehensive elasticity figure
 #'
 #' @description
-#' This function creates Figure 2, S2 and S3 for the manuscript showing
+#' This function creates Figure 3, S3 and S4 for the manuscript showing
 #' the sensitivity of population growth rate and phosphorus content
 #' to survival, fecundity, and growth rates.
 #'
 #' @param elasticity_results Data table with comprehensive elasticity analysis results.
 #' @param analysis_type Type of analysis to coduct: \code{"survival"}, \code{"fecundity"} or \code{"growth"}.
 #'
-#' @return A ggplot object for Figure 2, S2 or S3
+#' @return A ggplot object for Figure 3, S3 or S4
 #' @export
 #' @importFrom scales trans_new label_percent
 #' @importFrom scales trans_new label_percent
@@ -403,14 +673,14 @@ create_elasticity_figure <- function(elasticity_results, analysis_type) {
 #' Create J1 and A3 survival effect figure
 #'
 #' @description
-#' This function creates Figure 3 for the manuscript showing
+#' This function creates Figure 4 for the manuscript showing
 #' the effect of J1 and A3 survival on the relationship between
 #' asymptotic growth rate and phosphorus content.
 #'
 #' @param figure_data Data filtered for J1 and A3 classes
 #' @param ref_points Reference points from annual simulation
 #'
-#' @return A ggplot object for Figure 3
+#' @return A ggplot object for Figure 4
 #' @export
 #' @importFrom data.table as.data.table
 #' @importFrom dplyr mutate
@@ -534,7 +804,7 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
 #' Create survival gradient density figure
 #'
 #' @description
-#' This function creates Figure 4 for the manuscript showing the density
+#' This function creates Figure 5 for the manuscript showing the density
 #' distribution of the asymptotic population growth rate (lambda) and
 #' population phosphorus content (%P) across survival rate categories for
 #' the J1 and A3 size classes, at each simulated temperature. Survival rates
@@ -553,7 +823,7 @@ create_j1_a3_survival_effect <- function(figure_data, ref_points) {
 #'   Currently unused in this version of the figure but retained for
 #'   interface consistency with the pipeline.
 #'
-#' @return A ggplot object for Figure 4.
+#' @return A ggplot object for Figure 5.
 #'
 #' @export
 #' @importFrom data.table as.data.table
@@ -900,7 +1170,7 @@ create_phosphorus_sex_difference_figure <- function(
 #' Create a plot of significant transition rates between size classes
 #'
 #' @description
-#' This function creates Figure S1 showing significant transition rates between size classes
+#' This function creates Figure S2 showing significant transition rates between size classes
 #' as a function of temperature.
 #'
 #' @param transition_data Data frame containing transition rates (output from calculate_transition_rates)
@@ -909,7 +1179,7 @@ create_phosphorus_sex_difference_figure <- function(
 #' @param L_max Maximum size in mm
 #' @param delta_t Time step in days
 #'
-#' @return A ggplot object with the transition rates visualization for Figure S1
+#' @return A ggplot object with the transition rates visualization for Figure S2
 #'
 #' @importFrom ggplot2 ggplot aes geom_vline geom_line scale_x_continuous scale_y_continuous coord_cartesian labs facet_grid
 #' @importFrom dplyr group_by summarise filter inner_join
