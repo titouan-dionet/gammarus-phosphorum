@@ -4,18 +4,23 @@
 \alias{create_j1_a3_survival_effect}
 \title{Create J1 and A3 survival effect figure}
 \usage{
-create_j1_a3_survival_effect(figure_data, ref_points)
+create_j1_a3_survival_effect(figure_data)
 }
 \arguments{
-\item{figure_data}{Data filtered for J1 and A3 classes}
-
-\item{ref_points}{Reference points from annual simulation}
+\item{figure_data}{Data table containing single-parameter simulation results
+for J1 and A3 survival variations, with columns \code{theta},
+\code{class_var}, \code{surv_rate_J1}, \code{surv_rate_A3},
+\code{lambda}, and \code{mean_percentP}}
 }
 \value{
-A ggplot object for Figure 3
+A ggplot object representing Figure 4
 }
 \description{
-This function creates Figure 3 for the manuscript showing
-the effect of J1 and A3 survival on the relationship between
-asymptotic growth rate and phosphorus content.
+Creates Figure 4 for the manuscript, displaying the relationship between
+the asymptotic growth rate (lambda) and mean population phosphorus content
+(\%P) when varying the survival rate of the J1 (top row) or A3 (bottom row)
+size class across its full range, at three temperatures (8, 12, and 16 C).
+All other class-specific survival rates are held constant at their empirical
+monthly average values. These two classes were selected based on their
+dominant contribution to lambda sensitivity (Fig. 3).
 }

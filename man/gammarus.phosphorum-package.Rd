@@ -6,12 +6,13 @@
 \alias{gammarus.phosphorum-package}
 \title{gammarus.phosphorum: Population-level Tests of the Growth Rate Hypothesis in Gammarus fossarum}
 \description{
-A matrix-based framework for testing ecological stoichiometry theories at the population level. Integrates phosphorus content measurements with a size-structured population model for Gammarus fossarum to investigate whether the Growth Rate Hypothesis applies at the population level. Includes functions for matrix population modeling, stoichiometric calculations, and comprehensive simulation tools to explore the relationship between population growth rate and elemental composition.
+Companion code to Dionet et al. (in prep.) testing the Growth Rate Hypothesis at the population level in Gammarus fossarum. Provides functions for size-structured matrix population modeling, stoichiometric calculations, and simulation tools to explore the relationship between population growth rate and phosphorus content. Raw data are archived separately [DOI to be completed]. The manuscript is available as a preprint [DOI to be completed].
 }
 \seealso{
 Useful links:
 \itemize{
   \item \url{https://github.com/titouan-dionet/gammarus-phosphorum}
+  \item \url{[DOI to be completed]}
   \item Report bugs at \url{https://github.com/titouan-dionet/gammarus-phosphorum/issues}
 }
 

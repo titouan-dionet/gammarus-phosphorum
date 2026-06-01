@@ -24,9 +24,9 @@ create_transition_rates_plot(
 \item{delta_t}{Time step in days}
 }
 \value{
-A ggplot object with the transition rates visualization for Figure S1
+A ggplot object with the transition rates visualization for Figure S2
 }
 \description{
-This function creates Figure S1 showing significant transition rates between size classes
+This function creates Figure S2 showing significant transition rates between size classes
 as a function of temperature.
 }

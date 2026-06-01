@@ -12,9 +12,9 @@ create_phosphorus_figure(phosphorus_data, stats_info)
 \item{stats_info}{Statistical results with significance letters}
 }
 \value{
-A ggplot object for Figure 1
+A ggplot object for Figure 2
 }
 \description{
-This function creates Figure 1 for the manuscript showing
+This function creates Figure 2 for the manuscript showing
 phosphorus content by size class.
 }
