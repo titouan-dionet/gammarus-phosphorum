@@ -1266,7 +1266,7 @@ tar_plan(
       basename = "figure_5_survival_gradient_effect",
       dir = fig_output_dir,
       width = 2000,
-      height = 1750,
+      height = 1600,
       units = "px",
       dpi = 200
     ),

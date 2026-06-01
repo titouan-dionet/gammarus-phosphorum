@@ -826,15 +826,19 @@ create_j1_a3_survival_effect <- function(figure_data) {
 #' Create survival gradient density figure
 #'
 #' @description
-#' This function creates Figure 5 for the manuscript showing the density
-#' distribution of the asymptotic population growth rate (lambda) and
-#' population phosphorus content (%P) across survival rate categories for
-#' the J1 and A3 size classes, at each simulated temperature. Survival rates
-#' are binned into four quartile categories. The joint distribution of lambda
-#' and %P is represented by overlapping 2D kernel density estimates for J1
-#' (green) and A3 (pink), with isodensity contour lines, and marginal
-#' density curves projected onto each axis. Facets are arranged by temperature
-#' (rows) and survival category (columns).
+#' This function creates Figure 5 for the manuscript showing the raw data
+#' distribution and density distribution of the asymptotic population growth
+#' rate (lambda) and population phosphorus content (%P) across survival rate
+#' categories for the J1 and A3 size classes, at each simulated temperature.
+#' The leftmost column displays the raw simulation output as a scatter plot
+#' (grey points), pooling all survival rate values, with one panel per
+#' temperature. The remaining four columns show survival rates binned into
+#' quartile categories, with the joint distribution of lambda and %P
+#' represented by overlapping 2D kernel density estimates for J1 (green) and
+#' A3 (pink), isodensity contour lines, and marginal density curves projected
+#' onto each axis. All panels share the same axis limits and aspect ratio, as
+#' they are produced within a single facet grid arranged by temperature (rows)
+#' and survival category (columns), with "All data" as the first column level.
 #'
 #' @param multi_param_results A data.table produced by the multi-parameter
 #'   simulation, containing at minimum the columns \code{theta},
@@ -849,14 +853,18 @@ create_j1_a3_survival_effect <- function(figure_data) {
 #'
 #' @export
 #' @importFrom data.table as.data.table
-#' @importFrom dplyr mutate
+#' @importFrom dplyr mutate left_join bind_rows
 #' @importFrom tidyr pivot_longer expand_grid
 #' @importFrom ggnewscale new_scale_fill new_scale_colour
 create_survival_gradient_density_figure <- function(
   multi_param_results,
   monthly_results
 ) {
-  # Create subdata
+  # ____________________________________________________________________________
+  # Data preparation ----
+  # ____________________________________________________________________________
+
+  # Pivot to long format (one row per class x simulation)
   simulations_data = multi_param_results[, .(
     theta,
     J1 = surv_rate_J1,
@@ -876,42 +884,68 @@ create_survival_gradient_density_figure <- function(
     ) |>
     data.table::as.data.table()
 
-  # Categorize survival rates into quartile bins
-  plot_data = simulations_data
-  plot_data[,
-    category := factor(
-      ifelse(
-        surv_rate <= 0.25,
-        "s \u2264 0.25",
-        ifelse(
-          surv_rate <= 0.50,
-          "0.25 < s \u2264 0.50",
-          ifelse(
-            surv_rate <= 0.75,
-            "0.50 < s \u2264 0.75",
-            "0.75 < s \u2264 1.00"
-          )
-        )
-      ),
-      levels = c(
-        "s \u2264 0.25",
-        "0.25 < s \u2264 0.50",
-        "0.50 < s \u2264 0.75",
-        "0.75 < s \u2264 1.00"
-      )
-    )
-  ]
+  # Define factor levels for category, including the scatter column first
+  category_levels = c(
+    "All data",
+    "s \u2264 0.25",
+    "0.25 < s \u2264 0.50",
+    "0.50 < s \u2264 0.75",
+    "0.75 < s \u2264 1.00"
+  )
 
-  # Facet labels combining survival category and temperature
-  temp_labels = tidyr::expand_grid(
-    category = unique(plot_data$category),
+  # Categorize survival rates into quartile bins and attach to simulations_data
+  plot_data = simulations_data |>
+    dplyr::mutate(
+      category = factor(
+        ifelse(
+          surv_rate <= 0.25,
+          "s \u2264 0.25",
+          ifelse(
+            surv_rate <= 0.50,
+            "0.25 < s \u2264 0.50",
+            ifelse(
+              surv_rate <= 0.75,
+              "0.50 < s \u2264 0.75",
+              "0.75 < s \u2264 1.00"
+            )
+          )
+        ),
+        levels = category_levels
+      )
+    ) |>
+    data.table::as.data.table()
+
+  # Scatter data: all simulations assigned to the "All data" category
+  scatter_data = simulations_data |>
+    dplyr::mutate(
+      category = factor("All data", levels = category_levels)
+    ) |>
+    data.table::as.data.table()
+
+  # ____________________________________________________________________________
+  # Facet label data ----
+  # ____________________________________________________________________________
+
+  # Labels for density panels (survival quartile categories)
+  temp_labels_density = tidyr::expand_grid(
+    category = factor(category_levels[-1], levels = category_levels),
     theta = unique(plot_data$theta)
   ) |>
     as.data.frame() |>
     dplyr::mutate(label = paste0(category, " - ", theta, "\u00b0C"))
 
-  # Create figure
-  fig_4 = ggplot() +
+  # Labels for scatter panels (leftmost column, one per temperature)
+  temp_labels_scatter = data.frame(
+    category = factor("All data", levels = category_levels),
+    theta = unique(simulations_data$theta),
+    label = paste0(unique(simulations_data$theta), "\u00b0C")
+  )
+
+  # ____________________________________________________________________________
+  # Figure ----
+  # ____________________________________________________________________________
+
+  fig_5 = ggplot() +
     # Scales
     scale_x_continuous(
       breaks = seq(0, 5, 0.2),
@@ -928,9 +962,21 @@ create_survival_gradient_density_figure <- function(
     # Background line for lambda = 1
     geom_vline(xintercept = 1, linewidth = 0.5, col = "darkgrey") +
 
+    # ------------------------------------------------------------------
+    # Leftmost column: raw scatter plot (all survival rates, grey points)
+    # ------------------------------------------------------------------
+    geom_point(
+      data = scatter_data,
+      aes(x = lambda, y = mean_percentP * 100),
+      color = "grey50",
+      alpha = 0.1,
+      size = 0.4,
+      shape = 16
+    ) +
+
     # A3 density raster layer
     ggplot2::stat_density_2d(
-      data = simulations_data[class == "A3"],
+      data = plot_data[class == "A3"],
       aes(
         x = lambda,
         y = mean_percentP * 100,
@@ -954,7 +1000,7 @@ create_survival_gradient_density_figure <- function(
     # J1 density raster layer (new fill scale)
     ggnewscale::new_scale_fill() +
     ggplot2::stat_density_2d(
-      data = simulations_data[class == "J1"],
+      data = plot_data[class == "J1"],
       aes(
         x = lambda,
         y = mean_percentP * 100,
@@ -979,7 +1025,7 @@ create_survival_gradient_density_figure <- function(
     ggnewscale::new_scale_fill() +
     ggnewscale::new_scale_colour() +
     ggplot2::geom_density_2d(
-      data = simulations_data[class == "A3"],
+      data = plot_data[class == "A3"],
       aes(
         x = lambda,
         y = mean_percentP * 100,
@@ -1005,7 +1051,7 @@ create_survival_gradient_density_figure <- function(
       guide = "none"
     ) +
     ggplot2::geom_density_2d(
-      data = simulations_data[class == "J1"],
+      data = plot_data[class == "J1"],
       aes(
         x = lambda,
         y = mean_percentP * 100,
@@ -1016,9 +1062,9 @@ create_survival_gradient_density_figure <- function(
       linewidth = 0.5
     ) +
 
-    # Facet labels in upper-right corner
+    # Facet labels for density panels (upper-right corner)
     geom_label(
-      data = temp_labels,
+      data = temp_labels_density,
       aes(label = label),
       x = Inf,
       y = Inf,
@@ -1034,14 +1080,32 @@ create_survival_gradient_density_figure <- function(
       color = "black"
     ) +
 
-    # Marginal density curves: lambda (x-axis projection)
+    # Facet labels for scatter panels (upper-right corner)
+    geom_label(
+      data = temp_labels_scatter,
+      aes(label = label),
+      x = Inf,
+      y = Inf,
+      hjust = "inward",
+      vjust = "inward",
+      label.padding = unit(0.15, "lines"),
+      label.size = 0,
+      label.r = unit(0, "lines"),
+      fill = "white",
+      alpha = 0.7,
+      family = "Roboto-Bold",
+      size = 3.5,
+      color = "black"
+    ) +
+
+    # Marginal density curves: lambda (x-axis projection), density panels only
     ggnewscale::new_scale_colour() +
     scale_color_manual(
       values = c(J1 = "#86c900e0", A3 = "#ff0077e0"),
       guide = "none"
     ) +
     ggplot2::geom_density(
-      data = simulations_data,
+      data = plot_data,
       aes(
         x = lambda,
         y = after_stat(ndensity) * 0.01 + 0.95,
@@ -1051,9 +1115,9 @@ create_survival_gradient_density_figure <- function(
       adjust = 1
     ) +
 
-    # Marginal density curves: %P (y-axis projection)
+    # Marginal density curves: %P (y-axis projection), density panels only
     ggplot2::geom_density(
-      data = simulations_data,
+      data = plot_data,
       aes(
         x = after_stat(ndensity) * 0.1,
         y = mean_percentP * 100,
@@ -1063,7 +1127,7 @@ create_survival_gradient_density_figure <- function(
       adjust = 1
     ) +
 
-    # Facets: rows = temperature, columns = survival category
+    # Facets: rows = temperature, columns = category (5 levels: scatter + 4 quartiles)
     facet_wrap(theta ~ category, nrow = 3) +
 
     # Labels
@@ -1084,7 +1148,7 @@ create_survival_gradient_density_figure <- function(
       plot.margin = margin(t = 5, b = 5, l = 5, r = 8)
     )
 
-  return(fig_4)
+  return(fig_5)
 }
 
 #' Create supplementary figure S1 for sex differences in phosphorus content
