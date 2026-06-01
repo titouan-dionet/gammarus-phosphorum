@@ -991,9 +991,12 @@ tar_plan(
     figure_4,
     {
       load_fonts
-      create_survival_gradient_effect(multi_param_results, monthly_simulations)
+      create_survival_gradient_density_figure(
+        multi_param_results,
+        monthly_simulations
+      )
     },
-    description = "Figure 4: Full parameter space exploration of growth rate and phosphorus relationship"
+    description = "Figure 4: Density distribution of population growth rate and phosphorus content across survival rate categories and temperatures"
   ),
 
   # ______________________________________________________________________________
