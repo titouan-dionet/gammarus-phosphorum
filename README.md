@@ -10,7 +10,7 @@ If you use this code, please cite the associated manuscript:
 
 > Dionet T., Cherif M., Billoir E., Felten V., Coulaud R. and Danger M. (in prep.). Testing the Growth Rate Hypothesis at the population level: fast growing populations of *Gammarus fossarum* do not necessarily exhibit the highest phosphorus contents. [DOI to be completed after acceptance]
 
-Preprint available at: [DOI BioRxiv to be completed]
+Preprint available at: [HAL identifier to be completed]
 
 This code is archived at Software Heritage:
 [![SWH](https://archive.softwareheritage.org/badge/origin/https://github.com/titouan-dionet/gammarus-phosphorum/)](https://archive.softwareheritage.org/browse/origin/?origin_url=https://github.com/titouan-dionet/gammarus-phosphorum)
@@ -31,7 +31,7 @@ Monthly survival rates are derived from Coulaud et al. (2014) and are included i
 ```
 gammarus-phosphorum/
 │
-├── R/                              # Source functions (R package structure)
+├── R/                             # Source functions (R package structure)
 │   ├── data_processing.R          # Data loading and processing functions
 │   ├── figures.R                  # Figure creation functions
 │   ├── gammarus-phosphorum-package.R
