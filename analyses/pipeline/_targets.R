@@ -91,8 +91,8 @@ tar_plan(
     calibration_data,
     fread(
       here::here("data", "raw_data", "P_conc_range_2023_07.csv"),
-      sep = ";",
-      dec = ",",
+      sep = ",",
+      dec = ".",
       header = TRUE
     ),
     description = "Phosphorus calibration curve data from July 2023"
@@ -110,8 +110,8 @@ tar_plan(
     raw_phosphorus_data,
     fread(
       here::here("data", "raw_data", "phosphorus_measurements_2023_07.csv"),
-      sep = ";",
-      dec = ",",
+      sep = ",",
+      dec = ".",
       header = TRUE
     ),
     description = "Raw phosphorus measurement data from July 2023"
@@ -206,8 +206,8 @@ tar_plan(
     monthly_surv_rates,
     fread(
       here::here("data", "raw_data", "monthly_surv_rates_coulaud_2014.csv"),
-      sep = ";",
-      dec = ","
+      sep = ",",
+      dec = "."
     ),
     description = "Monthly survival rates for seasonal simulations from Coulaud et al., 2014"
   ),
@@ -397,7 +397,7 @@ tar_plan(
     single_param_results_save_path,
     {
       file_path = file.path(sim_output_dir, "single_param_results.csv")
-      fwrite(single_param_results, file = file_path, sep = ";", dec = ",")
+      fwrite(single_param_results, file = file_path, sep = ",", dec = ".")
       return(file_path)
     },
     description = "Save results of single-parameter simulations"
@@ -495,7 +495,7 @@ tar_plan(
     multi_param_results_save_path,
     {
       file_path = file.path(sim_output_dir, "multi_param_results.csv")
-      fwrite(multi_param_results, file = file_path, sep = ";", dec = ",")
+      fwrite(multi_param_results, file = file_path, sep = ",", dec = ".")
       return(file_path)
     },
     description = "Save results of multi-parameter simulations"
@@ -570,7 +570,7 @@ tar_plan(
     monthly_results_save_path,
     {
       file_path = file.path(sim_output_dir, "monthly_results.csv")
-      fwrite(monthly_simulations, file = file_path, sep = ";", dec = ",")
+      fwrite(monthly_simulations, file = file_path, sep = ",", dec = ".")
       return(file_path)
     },
     description = "Save results of monthly simulations"
@@ -628,7 +628,7 @@ tar_plan(
     annual_results_save_path,
     {
       file_path = file.path(sim_output_dir, "annual_results.csv")
-      fwrite(annual_simulations, file = file_path, sep = ";", dec = ",")
+      fwrite(annual_simulations, file = file_path, sep = ",", dec = ".")
       return(file_path)
     },
     description = "Save results of annual simulation"
@@ -764,8 +764,8 @@ tar_plan(
       fwrite(
         elasticity_results,
         file = file_path,
-        sep = ";",
-        dec = ","
+        sep = ",",
+        dec = "."
       )
       return(file_path)
     },
@@ -908,8 +908,8 @@ tar_plan(
       fwrite(
         model_parameter_elasticity_results,
         file = file_path,
-        sep = ";",
-        dec = ","
+        sep = ",",
+        dec = "."
       )
       return(file_path)
     },
@@ -1014,8 +1014,8 @@ tar_plan(
     calibration_sup_data,
     fread(
       here::here("data", "raw_data", "P_conc_range_2023_04.csv"),
-      sep = ";",
-      dec = ",",
+      sep = ",",
+      dec = ".",
       header = TRUE
     ),
     description = "Phosphorus calibration curve data from April 2023"
@@ -1037,8 +1037,8 @@ tar_plan(
         "raw_data",
         "phosphorus_measurements_individual_2023_04.csv"
       ),
-      sep = ";",
-      dec = ",",
+      sep = ",",
+      dec = ".",
       header = TRUE
     ),
     description = "Raw phosphorus measurement data from April 2023"
@@ -1185,8 +1185,8 @@ tar_plan(
         bom = TRUE,
         encoding = "UTF-8",
         file = file_path,
-        sep = ";",
-        dec = ",",
+        sep = ",",
+        dec = ".",
         row.names = FALSE
       )
       file_path
