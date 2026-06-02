@@ -12,7 +12,10 @@ If you use this code, please cite the associated manuscript:
 
 Preprint available at: [DOI BioRxiv to be completed]
 
-This code is archived at: [SWHID Software Heritage to be completed]
+This code is archived at Software Heritage (preliminary version):
+[![SWH](https://archive.softwareheritage.org/badge/swh:1:dir:b3401c5e8a01b19bd8bff67c64f4771bb4df484d/)](https://archive.softwareheritage.org/swh:1:dir:b3401c5e8a01b19bd8bff67c64f4771bb4df484d)
+
+> Note: This archive corresponds to a preliminary version of the code. A final archive will be deposited upon manuscript acceptance.
 
 ## Data Availability
 

@@ -17,7 +17,7 @@ Description: Companion code to Dionet et al. (in prep.) testing the Growth
     [DOI to be completed].
 License: GPL (>= 3)
 URL: https://github.com/titouan-dionet/gammarus-phosphorum,
-    [DOI to be completed]
+    https://archive.softwareheritage.org/swh:1:dir:b3401c5e8a01b19bd8bff67c64f4771bb4df484d
 BugReports: https://github.com/titouan-dionet/gammarus-phosphorum/issues
 Imports: 
     agricolae,
