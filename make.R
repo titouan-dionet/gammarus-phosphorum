@@ -64,10 +64,16 @@ targets::tar_config_set(
   script = here::here("analyses", "pipeline", "_targets.R")
 )
 
-# ---- Create Documentation Directory ----
-doc_dir <- here::here("outputs", "documentation")
-if (!dir.exists(doc_dir)) {
-  dir.create(doc_dir, recursive = TRUE)
+# ---- Create data directory ----
+data_dir <- here::here("data", "raw_data")
+if (!dir.exists(data_dir)) {
+  dir.create(data_dir, recursive = TRUE)
+  cat("Created data/raw_data/ directory.\n")
+  cat("Please place the raw data files in:", data_dir, "\n")
+  cat("Data available at: https://doi.org/10.57745/KTUAUG\n")
+  stop(
+    "Pipeline stopped: raw data files are missing. Download them and rerun make.R."
+  )
 }
 
 # ---- Pre-Execution Visualization ----

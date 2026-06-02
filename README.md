@@ -8,20 +8,21 @@ Companion code to Dionet et al. (in prep.) testing whether the Growth Rate Hypot
 
 If you use this code, please cite the associated manuscript:
 
-> Dionet T. et al. (in prep.). Testing the Growth Rate Hypothesis at the population level in *Gammarus fossarum*. [DOI to be completed after acceptance]
+> Dionet T., Cherif M., Billoir E., Felten V., Coulaud R. and Danger M. (in prep.). Testing the Growth Rate Hypothesis at the population level: fast growing populations of *Gammarus fossarum* do not necessarily exhibit the highest phosphorus contents. [DOI to be completed after acceptance]
 
 Preprint available at: [DOI BioRxiv to be completed]
 
-This code is archived at Software Heritage (preliminary version):
-[![SWH](https://archive.softwareheritage.org/badge/swh:1:dir:b3401c5e8a01b19bd8bff67c64f4771bb4df484d/)](https://archive.softwareheritage.org/swh:1:dir:b3401c5e8a01b19bd8bff67c64f4771bb4df484d)
+This code is archived at Software Heritage:
+[![SWH](https://archive.softwareheritage.org/badge/origin/https://github.com/titouan-dionet/gammarus-phosphorum/)](https://archive.softwareheritage.org/browse/origin/?origin_url=https://github.com/titouan-dionet/gammarus-phosphorum)
 
 > Note: This archive corresponds to a preliminary version of the code. A final archive will be deposited upon manuscript acceptance.
 
 ## Data Availability
 
 Raw data used in this study are archived at DOREL (Universite de Lorraine, recherche.data.gouv.fr):
+[![DOI](https://img.shields.io/badge/DOI-10.57745%2FKTUAUG-blue)](https://doi.org/10.57745/KTUAUG)
 
-> Dionet T. et al. (2025). Raw phosphorus measurements and survival rates for *Gammarus fossarum* population modeling. DOREL. [DOI to be completed]
+> Dionet T., Cherif M., Billoir E., Felten V., Coulaud R. and Danger M. (2026). Data for: Testing the Growth Rate Hypothesis at the population level: fast growing populations of *Gammarus fossarum* do not necessarily exhibit the highest phosphorus contents. Recherche Data Gouv. https://doi.org/10.57745/KTUAUG
 
 Monthly survival rates are derived from Coulaud et al. (2014) and are included in the data archive above.
 
@@ -157,6 +158,26 @@ install.packages("renv")
 # Restore the project library
 renv::restore()
 ```
+
+### Data
+
+Raw data must be downloaded separately from DOREL and placed in the
+`data/raw_data/` directory before running the pipeline:
+
+[![DOI](https://img.shields.io/badge/DOI-10.57745%2FKTUAUG-blue)](https://doi.org/10.57745/KTUAUG)
+
+If the directory does not exist, create it manually:
+
+```r
+dir.create("data/raw_data", recursive = TRUE)
+```
+
+Then place the following files inside it:
+- `P_conc_range_2023_04.csv`
+- `P_conc_range_2023_07.csv`
+- `phosphorus_measurements_individual_2023_04.csv`
+- `phosphorus_measurements_2023_07.csv`
+- `monthly_surv_rates_coulaud_2014.csv`
 
 ### Running the Analysis
 
