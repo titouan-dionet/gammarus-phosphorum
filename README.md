@@ -10,7 +10,8 @@ If you use this code, please cite the associated manuscript:
 
 > Dionet T., Cherif M., Billoir E., Felten V., Coulaud R. and Danger M. (in prep.). Testing the Growth Rate Hypothesis at the population level: fast growing populations of *Gammarus fossarum* do not necessarily exhibit the highest phosphorus contents. [DOI to be completed after acceptance]
 
-Preprint available at: [HAL identifier to be completed]
+Preprint available at: https://hal.science/hal-05641762
+[![HAL](https://img.shields.io/badge/HAL-hal--05641762-b22222)](https://hal.science/hal-05641762)
 
 This code is archived at Software Heritage:
 [![SWH](https://archive.softwareheritage.org/badge/origin/https://github.com/titouan-dionet/gammarus-phosphorum/)](https://archive.softwareheritage.org/browse/origin/?origin_url=https://github.com/titouan-dionet/gammarus-phosphorum)

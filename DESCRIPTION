@@ -15,7 +15,7 @@ Description: Companion code to Dionet et al. (in prep.) Testing the Growth
     modeling, stoichiometric calculations, and simulation tools to explore 
     the relationship between population growth rate and phosphorus content. 
     Raw data are archived separately https://doi.org/10.57745/KTUAUG. The 
-    manuscript is available as a preprint [DOI to be completed].
+    manuscript is available as a preprint https://hal.science/hal-05641762.
 License: GPL (>= 3)
 URL: https://github.com/titouan-dionet/gammarus-phosphorum,
     https://archive.softwareheritage.org/browse/origin/?origin_url=https://github.com/titouan-dionet/gammarus-phosphorum
