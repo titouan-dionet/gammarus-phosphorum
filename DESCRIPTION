@@ -30,24 +30,24 @@ Imports:
     grid,
     gridExtra,
     here,
+    jsonlite,
     MASS,
     patchwork,
     scales,
     showtext,
     stats,
+    svglite,
     sysfonts,
+    systemfonts,
     tagger,
+    tarchetypes,
+    targets,
     tibble,
     tidyr,
     tools,
     utils
 Suggests: 
-    testthat (>= 3.0.0),
-    svglite,
-    systemfonts,
-    tarchetypes,
-    targets,
-    jsonlite
+    testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
