@@ -390,7 +390,7 @@ create_phosphorus_figure <- function(phosphorus_data, stats_info) {
 #' @importFrom scales trans_new label_percent
 create_elasticity_figure <- function(elasticity_results, analysis_type) {
   # Select data
-  elasticity_results = elasticity_results[parameter_type == analysis_type]
+  elasticity_results <- elasticity_results[parameter_type == analysis_type]
 
   # Define a common color palette for all parameter types
   class_colors <- c(
@@ -416,7 +416,7 @@ create_elasticity_figure <- function(elasticity_results, analysis_type) {
   )
 
   # Sub-figure A: Sensitivity of asymptotic growth rate (\u03bb) by parameter type
-  lambda_plot = ggplot(elasticity_results) +
+  lambda_plot <- ggplot(elasticity_results) +
     # Scale color
     scale_color_manual(values = class_colors, name = "Size Class") +
 
@@ -479,7 +479,7 @@ create_elasticity_figure <- function(elasticity_results, analysis_type) {
     )
 
   # Sub-figure B: Sensitivity of phosphorus percentage (%P) by parameter type
-  p_plot = ggplot(elasticity_results) +
+  p_plot <- ggplot(elasticity_results) +
     # Scale color
     scale_color_manual(values = class_colors, name = "Size Class") +
 
@@ -538,7 +538,7 @@ create_elasticity_figure <- function(elasticity_results, analysis_type) {
 
   # Scales
   if (analysis_type == "survival") {
-    lambda_plot = lambda_plot +
+    lambda_plot <- lambda_plot +
       # Scale axis
       scale_x_continuous(
         breaks = seq(0, 1, by = 0.1),
@@ -553,7 +553,7 @@ create_elasticity_figure <- function(elasticity_results, analysis_type) {
       ) +
       coord_cartesian(xlim = c(0, 1), ylim = c(-10, 0), clip = "on")
 
-    p_plot = p_plot +
+    p_plot <- p_plot +
       # Scale axis
       scale_x_continuous(
         breaks = seq(0, 1, by = 0.1),
@@ -569,7 +569,7 @@ create_elasticity_figure <- function(elasticity_results, analysis_type) {
       ) +
       coord_cartesian(xlim = c(0, 1), ylim = c(-5, 6), clip = "on")
   } else if (analysis_type == "fecundity") {
-    lambda_plot = lambda_plot +
+    lambda_plot <- lambda_plot +
       # Scale axis
       scale_x_continuous(
         breaks = seq(0, 1, by = 0.1),
@@ -584,7 +584,7 @@ create_elasticity_figure <- function(elasticity_results, analysis_type) {
       ) +
       coord_cartesian(xlim = c(0, 1), ylim = c(-2.5, 0), clip = "on")
 
-    p_plot = p_plot +
+    p_plot <- p_plot +
       # Scale axis
       scale_x_continuous(
         breaks = seq(0, 1, by = 0.1),
@@ -600,14 +600,14 @@ create_elasticity_figure <- function(elasticity_results, analysis_type) {
       ) +
       coord_cartesian(xlim = c(0, 1), ylim = c(-0.1, 0.15), clip = "on")
   } else if (analysis_type == "growth") {
-    major_br = c(
+    major_br <- c(
       seq(-50, -10 - 1e-9, by = 10),
       seq(-10, -2 - 1e-9, by = 2),
       seq(-2, 2 - 1e-9, by = 0.5),
       seq(2, 10 - 1e-9, by = 2),
       seq(10, 50, by = 10)
     )
-    minor_br = c(
+    minor_br <- c(
       seq(-50, -10 - 1e-9, by = 1),
       seq(-10, -2 - 1e-9, by = 0.5),
       seq(-2, 2 - 1e-9, by = 0.25),
@@ -615,7 +615,7 @@ create_elasticity_figure <- function(elasticity_results, analysis_type) {
       seq(2, 50, by = 1)
     )
 
-    lambda_plot = lambda_plot +
+    lambda_plot <- lambda_plot +
       # Scale axis
       scale_x_continuous(
         breaks = seq(0, 1, by = 0.1),
@@ -631,7 +631,7 @@ create_elasticity_figure <- function(elasticity_results, analysis_type) {
       ) +
       coord_cartesian(xlim = c(0, 1), ylim = c(-2, 50), clip = "on")
 
-    p_plot = p_plot +
+    p_plot <- p_plot +
       # Scale axis
       scale_x_continuous(
         breaks = seq(0, 1, by = 0.1),
@@ -649,7 +649,7 @@ create_elasticity_figure <- function(elasticity_results, analysis_type) {
   }
 
   # Assemble the plots
-  layout = c(
+  layout <- c(
     patchwork::area(t = 1, l = 1, b = 5, r = 2),
     patchwork::area(t = 6, l = 1, b = 10, r = 2)
   )
@@ -751,8 +751,7 @@ create_j1_a3_survival_effect <- function(figure_data) {
     # Color per class
     scale_color_manual(
       values = c(J1 = "#9ACD32", A3 = "#EE6AA7"),
-      name = "Size class",
-      guide = "none"
+      name = "Size class"
     ) +
 
     # Reference line at lambda = 1
@@ -798,16 +797,6 @@ create_j1_a3_survival_effect <- function(figure_data) {
     # Two rows: J1 (top) and A3 (bottom), three columns: temperatures
     facet_wrap(class_var ~ theta, nrow = 2) +
 
-    # Tag facets (A1-A3 top row, B1-B3 bottom row)
-    tagger::tag_facets(
-      tag = "rc",
-      position = "tl",
-      tag_levels = c("A", "1"),
-      tag_prefix = "(",
-      tag_suffix = ")",
-      tag_sep = ""
-    ) +
-
     # Theme
     theme_custom() +
     theme(
@@ -816,7 +805,7 @@ create_j1_a3_survival_effect <- function(figure_data) {
       strip.text = element_blank(),
       panel.spacing.x = unit(0.7, "lines"),
       panel.spacing.y = unit(1.2, "lines"),
-      legend.position = "none",
+      legend.position = "right",
       plot.margin = margin(t = 5, b = 5, l = 5, r = 8)
     )
 
@@ -865,7 +854,7 @@ create_survival_gradient_density_figure <- function(
   # ____________________________________________________________________________
 
   # Pivot to long format (one row per class x simulation)
-  simulations_data = multi_param_results[, .(
+  simulations_data <- multi_param_results[, .(
     theta,
     J1 = surv_rate_J1,
     A3 = surv_rate_A3,
@@ -885,7 +874,7 @@ create_survival_gradient_density_figure <- function(
     data.table::as.data.table()
 
   # Define factor levels for category, including the scatter column first
-  category_levels = c(
+  category_levels <- c(
     "All data",
     "s \u2264 0.25",
     "0.25 < s \u2264 0.50",
@@ -894,7 +883,7 @@ create_survival_gradient_density_figure <- function(
   )
 
   # Categorize survival rates into quartile bins and attach to simulations_data
-  plot_data = simulations_data |>
+  plot_data <- simulations_data |>
     dplyr::mutate(
       category = factor(
         ifelse(
@@ -916,7 +905,7 @@ create_survival_gradient_density_figure <- function(
     data.table::as.data.table()
 
   # Scatter data: all simulations assigned to the "All data" category
-  scatter_data = simulations_data |>
+  scatter_data <- simulations_data |>
     dplyr::mutate(
       category = factor("All data", levels = category_levels)
     ) |>
@@ -927,7 +916,7 @@ create_survival_gradient_density_figure <- function(
   # ____________________________________________________________________________
 
   # Labels for density panels (survival quartile categories)
-  temp_labels_density = tidyr::expand_grid(
+  temp_labels_density <- tidyr::expand_grid(
     category = factor(category_levels[-1], levels = category_levels),
     theta = unique(plot_data$theta)
   ) |>
@@ -935,7 +924,7 @@ create_survival_gradient_density_figure <- function(
     dplyr::mutate(label = paste0(category, " - ", theta, "\u00b0C"))
 
   # Labels for scatter panels (leftmost column, one per temperature)
-  temp_labels_scatter = data.frame(
+  temp_labels_scatter <- data.frame(
     category = factor("All data", levels = category_levels),
     theta = unique(simulations_data$theta),
     label = paste0(unique(simulations_data$theta), "\u00b0C")
@@ -945,7 +934,7 @@ create_survival_gradient_density_figure <- function(
   # Figure ----
   # ____________________________________________________________________________
 
-  fig_5 = ggplot() +
+  fig_5 <- ggplot() +
     # Scales
     scale_x_continuous(
       breaks = seq(0, 5, 0.2),
@@ -1436,7 +1425,7 @@ create_model_parameter_elasticity_figure <- function(elasticity_results) {
   )
 
   # Categories
-  categories_levels = levels(results_with_categories$category)
+  categories_levels <- levels(results_with_categories$category)
 
   # Figures list
   figures <- setNames(
@@ -1448,10 +1437,10 @@ create_model_parameter_elasticity_figure <- function(elasticity_results) {
 
   for (i in 1:length(categories_levels)) {
     # Select sub-data
-    data = results_with_categories[category == categories_levels[i]]
+    data <- results_with_categories[category == categories_levels[i]]
 
     # Sub-figure A: Sensitivity of asymptotic growth rate (\u03bb) by parameter type
-    lambda_plot = ggplot(data) +
+    lambda_plot <- ggplot(data) +
       # Scales
       scale_x_continuous(
         breaks = seq(0, 1, by = 0.1),
@@ -1519,7 +1508,7 @@ create_model_parameter_elasticity_figure <- function(elasticity_results) {
       )
 
     # Sub-figure B: Sensitivity of phosphorus percentage (%P) by parameter type
-    p_plot = ggplot(data) +
+    p_plot <- ggplot(data) +
       # Scales
       scale_x_continuous(
         breaks = seq(0, 1, by = 0.1),
@@ -1596,7 +1585,7 @@ create_model_parameter_elasticity_figure <- function(elasticity_results) {
       theme(legend.position = "bottom")
 
     # Figures saving
-    figures[[categories_levels[i]]] = final_plot
+    figures[[categories_levels[i]]] <- final_plot
   }
 
   return(figures)

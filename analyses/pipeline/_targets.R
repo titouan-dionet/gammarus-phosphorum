@@ -396,7 +396,7 @@ tar_plan(
   tar_target(
     single_param_results_save_path,
     {
-      file_path = file.path(sim_output_dir, "single_param_results.csv")
+      file_path <- file.path(sim_output_dir, "single_param_results.csv")
       fwrite(single_param_results, file = file_path, sep = ",", dec = ".")
       return(file_path)
     },
@@ -494,7 +494,7 @@ tar_plan(
   tar_target(
     multi_param_results_save_path,
     {
-      file_path = file.path(sim_output_dir, "multi_param_results.csv")
+      file_path <- file.path(sim_output_dir, "multi_param_results.csv")
       fwrite(multi_param_results, file = file_path, sep = ",", dec = ".")
       return(file_path)
     },
@@ -569,7 +569,7 @@ tar_plan(
   tar_target(
     monthly_results_save_path,
     {
-      file_path = file.path(sim_output_dir, "monthly_results.csv")
+      file_path <- file.path(sim_output_dir, "monthly_results.csv")
       fwrite(monthly_simulations, file = file_path, sep = ",", dec = ".")
       return(file_path)
     },
@@ -627,7 +627,7 @@ tar_plan(
   tar_target(
     annual_results_save_path,
     {
-      file_path = file.path(sim_output_dir, "annual_results.csv")
+      file_path <- file.path(sim_output_dir, "annual_results.csv")
       fwrite(annual_simulations, file = file_path, sep = ",", dec = ".")
       return(file_path)
     },
@@ -757,7 +757,7 @@ tar_plan(
   tar_target(
     elasticity_results_save_path,
     {
-      file_path = file.path(
+      file_path <- file.path(
         sim_output_dir,
         "elasticity_results.csv"
       )
@@ -901,7 +901,7 @@ tar_plan(
   tar_target(
     model_parameter_elasticity_save_path,
     {
-      file_path = file.path(
+      file_path <- file.path(
         sim_output_dir,
         "model_parameter_elasticity_results.csv"
       )
@@ -1250,7 +1250,7 @@ tar_plan(
       plot = figure_4,
       basename = "figure_4_j1_a3_survival_effect",
       dir = fig_output_dir,
-      width = 1024,
+      width = 1024 + 200,
       height = 720,
       units = "px",
       dpi = 200
@@ -1337,7 +1337,7 @@ tar_plan(
   tar_target(
     save_figure_S5,
     {
-      names_figures = names(figure_S5)
+      names_figures <- names(figure_S5)
       for (sub_fig in 1:length(names_figures)) {
         save_figure(
           plot = figure_S5[[sub_fig]],
