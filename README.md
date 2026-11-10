@@ -1,14 +1,14 @@
-# Gammarus Phosphorum: Testing the Growth Rate Hypothesis at the Population Level
+# Gammarus Phosphorum: Demographic Structure and the Growth-Phosphorus Relation at the Population Level
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-Companion code to Dionet et al. (in prep.) testing whether the Growth Rate Hypothesis (GRH), well established at the individual level, applies at the population level in *Gammarus fossarum* (Crustacea, Amphipoda). The study integrates phosphorus content measurements with a size-structured Lefkovitch matrix population model and demographic simulations across a range of survival rates and temperatures.
+Companion code to Dionet et al. (in prep.), which examines how demographic structure mediates the relation between growth rate and phosphorus (P) content at the population level in *Gammarus fossarum* (Crustacea, Amphipoda). The study integrates P content measurements with a size-structured Lefkovitch matrix population model and demographic simulations across a range of survival rates and temperatures.
 
 ## Citation
 
 If you use this code, please cite the associated manuscript:
 
-> Dionet T., Cherif M., Billoir E., Felten V., Coulaud R. and Danger M. (in prep.). Testing the Growth Rate Hypothesis at the population level: fast growing populations of *Gammarus fossarum* do not necessarily exhibit the highest phosphorus contents. [DOI to be completed after acceptance]
+> Dionet T., Cherif M., Billoir E., Felten V., Coulaud R. and Danger M. (in prep.). Demographic structure mediates the growth-phosphorus relation at the population level: modelling the case of *Gammarus fossarum*. [DOI to be completed after acceptance]
 
 Preprint available at: https://hal.science/hal-05641762
 [![HAL](https://img.shields.io/badge/HAL-hal--05641762-b22222)](https://hal.science/hal-05641762)
@@ -23,7 +23,7 @@ This code is archived at Software Heritage:
 Raw data used in this study are archived at DOREL (Universite de Lorraine, recherche.data.gouv.fr):
 [![DOI](https://img.shields.io/badge/DOI-10.57745%2FKTUAUG-blue)](https://doi.org/10.57745/KTUAUG)
 
-> Dionet T., Cherif M., Billoir E., Felten V., Coulaud R. and Danger M. (2026). Data for: Testing the Growth Rate Hypothesis at the population level: fast growing populations of *Gammarus fossarum* do not necessarily exhibit the highest phosphorus contents. Recherche Data Gouv. https://doi.org/10.57745/KTUAUG
+> Dionet T., Cherif M., Billoir E., Felten V., Coulaud R. and Danger M. (2026). Data for: Demographic structure mediates the growth-phosphorus relation at the population level: modelling the case of *Gammarus fossarum*. Recherche Data Gouv. https://doi.org/10.57745/KTUAUG
 
 Monthly survival rates are derived from Coulaud et al. (2014) and are included in the data archive above.
 
@@ -72,13 +72,13 @@ gammarus-phosphorum/
 
 ## Scientific Context
 
-The Growth Rate Hypothesis (Sterner and Elser 2002) predicts that rapidly growing organisms have higher phosphorus demands due to ribosome biosynthesis, producing a positive relationship between growth rate and phosphorus content at the individual level. Whether this relationship scales to the population level remains largely untested.
+At the individual level, the Growth Rate Hypothesis (GRH; Sterner and Elser 2002) predicts that faster growth is associated with higher P content, owing to the P-rich ribosomal RNA required for protein synthesis. At the population level, P content also depends on the demographic structure, that is, on the relative abundance of size classes that differ in both growth and P content. Whether the individual-level relation is conserved at the population level therefore depends on this structure.
 
-This study addresses this gap using *Gammarus fossarum* as a model organism, combining:
+This study addresses the question in *Gammarus fossarum* by combining:
 
-- empirical measurements of phosphorus content across five size classes;
+- empirical measurements of P content across five size classes;
 - a size-structured Lefkovitch matrix population model parameterized at three temperatures (8, 12, and 16 deg C);
-- demographic simulations exploring a wide range of survival rate combinations to assess the relationship between population growth rate (lambda) and population-level phosphorus content.
+- demographic simulations exploring a wide range of survival rate combinations, to assess how demographic structure mediates the relation between the asymptotic population growth rate (lambda) and population-level P content.
 
 ## Model Description
 
@@ -112,13 +112,13 @@ Key analytical functions:
 
 Four simulation approaches are implemented in `simulation.R`:
 
-1. **Single-parameter simulations** (Simulation 1): one survival rate is varied across its full range [0, 1] while the other four are held at their annual mean values derived from Coulaud et al. (2014). Performed for each size class and each temperature (1,000 iterations per class per temperature).
+1. **Single-parameter simulations** (Simulation 1): the survival rate of one size class is varied between 0.001 and 1.000, while the other four are held at the monthly mean survival rates derived from Coulaud et al. (2014). Performed for each size class and each temperature (1,000 iterations per class per temperature).
 
-2. **Multi-parameter simulations** (Simulation 2): all five survival rates are drawn simultaneously and independently from a uniform distribution U(0.001, 1). Performed for each temperature (10,000 iterations per temperature).
+2. **Multi-parameter simulations** (Simulation 2): all five survival rates are drawn simultaneously and independently from a uniform distribution U(0.001, 1.000). Performed for each temperature (10,000 iterations per temperature).
 
 3. **Monthly simulations** (Simulation 3): survival rates follow the seasonal variation observed in Coulaud et al. (2014), iterated over 12 months.
 
-4. **Elasticity analyses**: sensitivity of lambda and population phosphorus content to small relative changes in survival rates, fecundity rates, and growth transition rates (`calculate_comprehensive_elasticity()`), as well as to underlying model parameters (`calculate_model_parameter_elasticity()`).
+3. **Elasticity analyses**: sensitivity of lambda and population P content to a 10% reduction of each survival, fecundity, and growth transition rate, applied one parameter at a time to each of the 10,000 multi-parameter simulations (`calculate_comprehensive_elasticity()`), as well as to underlying model parameters (`calculate_model_parameter_elasticity()`).
 
 ## Figures
 
