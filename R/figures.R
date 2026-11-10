@@ -167,18 +167,18 @@ create_grh_conceptual_figure <- function() {
 
   x_lambda <- seq(0, 10, length.out = 300)
 
-  # H1: positive linear (GRH holds)
+  # H1: positive linear
   h1 <- data.frame(x = x_lambda, y = 0.3 + 0.065 * x_lambda, hyp = "H1")
-  # H2: flat (no relationship)
-  h2 <- data.frame(x = x_lambda, y = rep(0.55, 300), hyp = "H2")
-  # H3: negative linear (reverse GRH)
-  h3 <- data.frame(x = x_lambda, y = 0.85 - 0.065 * x_lambda, hyp = "H3")
-  # H4: non-monotonic (complex)
-  h4 <- data.frame(
+  # H2: negative linear (reverse H1)
+  h2 <- data.frame(x = x_lambda, y = 0.85 - 0.065 * x_lambda, hyp = "H2")
+  # H3: non-monotonic (complex)
+  h3 <- data.frame(
     x = x_lambda,
     y = 0.55 + 0.18 * sin(x_lambda * 0.75 - 0.5),
-    hyp = "H4"
+    hyp = "H3"
   )
+  # H4: flat (no relationship)
+  h4 <- data.frame(x = x_lambda, y = rep(0.55, 300), hyp = "H4")
 
   panel_c_data <- rbind(h1, h2, h3, h4)
 
